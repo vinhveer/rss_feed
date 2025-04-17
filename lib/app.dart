@@ -1,92 +1,46 @@
 import 'package:flutter/material.dart';
-import 'package:rss_feed/pages/page_home.dart';
-import 'package:rss_feed/pages/page_settings.dart';
+import 'package:get/get.dart';
+import 'package:rss_feed/controllers/app_controller.dart';
 
-class App extends StatefulWidget {
-  const App({super.key});
+class App extends StatelessWidget {
+  final AppController appController = Get.find();
 
-  @override
-  State<App> createState() => _AppState();
-}
-
-class PageInfo {
-  final Widget page;
-  final String title;
-  final String id;
-
-  PageInfo({required this.page, required this.title, required this.id});
-}
-
-class _AppState extends State<App> {
-  int _currentIndex = 0;
-
-  final List<PageInfo> _pages = [
-    PageInfo(page: PageHome(), title: 'RSS', id: 'page_rss'),
-    PageInfo(page: PageSettings(), title: 'Cài đặt', id: 'page_settings'),
-  ];
-
-  void _onTabTapped(int index) {
-    setState(() {
-      _currentIndex = index;
-    });
-  }
-
-  void _onDrawerItemTapped(int index) {
-    Navigator.pop(context); // Đóng drawer
-    setState(() {
-      _currentIndex = index;
-    });
-  }
+  App({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_pages[_currentIndex].title),
+        title: Obx(() => Text(appController.currentTitle, style: TextStyle(fontWeight: FontWeight.w600),)),
       ),
-      drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            const DrawerHeader(
-              decoration: BoxDecoration(
-                color: Colors.blue,
-              ),
-              child: Text(
-                'Tài khoản',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                ),
-              ),
+      body: Obx(() => appController.currentPage),
+      bottomNavigationBar: Obx(
+            () => BottomNavigationBar(
+          type: BottomNavigationBarType.fixed,
+          iconSize: 30.0,
+          currentIndex: appController.currentIndex,
+          onTap: appController.changePage,
+          selectedLabelStyle: const TextStyle(fontSize: 10.0),
+          unselectedLabelStyle: const TextStyle(fontSize: 10.0),
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home),
+              label: 'Trang chủ',
             ),
-            ListTile(
-              leading: const Icon(Icons.home),
-              title: const Text('Trang chủ'),
-              onTap: () => _onDrawerItemTapped(0),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.compass_calibration_outlined),
+              label: 'Khám phá',
             ),
-            ListTile(
-              leading: const Icon(Icons.settings),
-              title: const Text('Cài đặt'),
-              onTap: () => _onDrawerItemTapped(1),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.favorite_outline),
+              label: 'Yêu thích',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.settings),
+              label: 'Cài đặt',
             ),
           ],
         ),
-      ),
-      body: _pages[_currentIndex].page,
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: _onTabTapped,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.rss_feed),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings),
-            label: 'Settings',
-          ),
-        ],
       ),
     );
   }
