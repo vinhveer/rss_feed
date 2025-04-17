@@ -6,6 +6,7 @@ import 'package:rss_feed/pages/page_choose_topic.dart';
 import 'package:rss_feed/pages/page_explore.dart';
 import 'package:rss_feed/pages/page_favourite.dart';
 import 'package:rss_feed/pages/page_home.dart';
+import 'package:rss_feed/pages/page_login.dart';
 import 'package:rss_feed/pages/page_read.dart';
 import 'package:rss_feed/pages/page_settings.dart';
 
@@ -14,15 +15,9 @@ class AppController extends GetxController {
   final RxInt _currentIndex = 0.obs;
   final RxBool _isScrolled = false.obs;
 
-  // Theme mode (light, dark, system) và swatch màu chủ đạo
-  final Rx<ThemeMode> _themeMode = ThemeMode.system.obs;
-  final Rx<MaterialColor> _primarySwatch = Rx<MaterialColor>(Colors.blue);
-
   // Getters
   int get currentIndex => _currentIndex.value;
   bool get isScrolled => _isScrolled.value;
-  ThemeMode get themeMode => _themeMode.value;
-  MaterialColor get primarySwatch => _primarySwatch.value;
 
   // Các trang chính
   final List<PageInfo> _pages = [
@@ -43,15 +38,10 @@ class AppController extends GetxController {
   void goToPageRead() => Get.to(() => PageRead());
   void goToColorSchemeSettingsPage() => Get.to(() => ColorSchemeSettingsPage());
   void goToThemeModeSettingPage() => Get.to(() => ThemeModeSettingPage());
+  void goToLoginPage() => Get.to(() => PageLogin());
 
   // Cập nhật trạng thái cuộn
   void updateScrollStatus(double offset) => _isScrolled.value = offset > 0;
-
-  // Thay đổi theme mode
-  void changeThemeMode(ThemeMode mode) => _themeMode.value = mode;
-
-  // Thay đổi màu chủ đạo
-  void changePrimaryColor(MaterialColor color) => _primarySwatch.value = color;
 
   @override
   void onInit() {
