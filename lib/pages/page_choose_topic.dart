@@ -5,12 +5,7 @@ import 'package:rss_feed/app.dart';
 class SetupController extends GetxController {
   var selectedLanguage = 'Tiếng Việt'.obs;
   var selectedTopics = <String>{}.obs;
-}
-
-class PageChooseTopic extends StatelessWidget {
-  PageChooseTopic({super.key});
-
-  final SetupController controller = Get.put(SetupController());
+  var selectedTopic = ''.obs;
 
   List<String> languages = [
     "Tiếng Việt",
@@ -59,6 +54,12 @@ class PageChooseTopic extends StatelessWidget {
     "Marketing",
     "Nông nghiệp"
   ];
+}
+
+class PageChooseTopic extends StatelessWidget {
+  PageChooseTopic({super.key});
+
+  final SetupController controller = Get.put(SetupController());
 
   @override
   Widget build(BuildContext context) {
@@ -86,7 +87,7 @@ class PageChooseTopic extends StatelessWidget {
                 value: controller.selectedLanguage.value.isEmpty
                     ? null
                     : controller.selectedLanguage.value,
-                items: languages.map((e) {
+                items: controller.languages.map((e) {
                   return DropdownMenuItem<String>(
                     value: e,
                     child: Text(
@@ -120,7 +121,7 @@ class PageChooseTopic extends StatelessWidget {
               Wrap(
                 spacing: 10,
                 runSpacing: 10,
-                children: topics.map((e) {
+                children: controller.topics.map((e) {
                   return Obx(() {
                     bool selected = controller.selectedTopics.contains(e);
                     return GestureDetector(
