@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:rss_feed/pages/page_choose_topic.dart';
 import 'controllers/app_controller.dart';
 import 'controllers/color_controller.dart';
 import 'app.dart';
@@ -57,7 +58,7 @@ class MyApp extends StatelessWidget {
         ),
 
         themeMode: mode,
-        home: App(),
+        home: PageChooseTopic(),
       );
     });
   }
