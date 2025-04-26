@@ -1,24 +1,10 @@
 import 'package:flutter/material.dart';
+import '../controllers/favourite_controller.dart';
+import '../models/favourite_item.dart';
 
-class FavouriteItem {
-  final String id;
-  final String title;
-  final String description;
-  final String category;
-  final String imageUrl;
-  final DateTime savedDate;
-  bool isSelected;
-
-  FavouriteItem({
-    required this.id,
-    required this.title,
-    required this.description,
-    required this.category,
-    required this.imageUrl,
-    required this.savedDate,
-    this.isSelected = false,
-  });
-}
+import '../components/category_filter_bar.dart';
+import '../components/item_action_bar.dart';
+import '../components/category_utils.dart';
 
 class PageFavourite extends StatefulWidget {
   const PageFavourite({super.key});
@@ -28,103 +14,56 @@ class PageFavourite extends StatefulWidget {
 }
 
 class _PageFavouriteState extends State<PageFavourite> {
-  String _selectedFilter = 'Tất cả';
-  bool _isSelectMode = false;
-  List<String> _categories = [
-    'Tất cả',
-    'Thể thao',
-    'Giải trí',
-    'Khoa học',
-    'Công nghệ',
-    'Âm nhạc',
-  ];
-
-  final List<FavouriteItem> _favourites = [
-    FavouriteItem(
-      id: '1',
-      title: 'Khám phá vùng biển sâu: Những sinh vật kỳ lạ dưới đáy đại dương',
-      description: 'Các nhà khoa học phát hiện nhiều loài sinh vật mới chưa từng được biết đến tại vùng biển sâu.',
-      category: 'Khoa học',
-      imageUrl: 'assets/images/ocean.jpg',
-      savedDate: DateTime.now().subtract(const Duration(days: 2)),
-    ),
-    FavouriteItem(
-      id: '2',
-      title: 'Đội tuyển Việt Nam chuẩn bị cho vòng loại World Cup 2026',
-      description: 'HLV trưởng công bố danh sách 26 cầu thủ cho các trận đấu sắp tới.',
-      category: 'Thể thao',
-      imageUrl: 'assets/images/football_team.jpg',
-      savedDate: DateTime.now().subtract(const Duration(days: 5)),
-    ),
-    FavouriteItem(
-      id: '3',
-      title: 'Top 10 phim đáng chờ đợi nhất năm 2025',
-      description: 'Những bom tấn Hollywood và các tác phẩm điện ảnh độc lập được mong chờ nhất.',
-      category: 'Giải trí',
-      imageUrl: 'assets/images/movies.jpg',
-      savedDate: DateTime.now().subtract(const Duration(days: 1)),
-    ),
-    FavouriteItem(
-      id: '4',
-      title: 'Xu hướng công nghệ AI mới nhất trong năm 2025',
-      description: 'Trí tuệ nhân tạo đang thay đổi cách chúng ta làm việc và sống như thế nào.',
-      category: 'Công nghệ',
-      imageUrl: 'assets/images/ai_tech.jpg',
-      savedDate: DateTime.now().subtract(const Duration(days: 3)),
-    ),
-    FavouriteItem(
-      id: '5',
-      title: 'Festival âm nhạc quốc tế sẽ diễn ra tại Hà Nội vào tháng 6',
-      description: 'Hàng loạt nghệ sĩ hàng đầu thế giới xác nhận tham gia sự kiện âm nhạc lớn nhất năm.',
-      category: 'Âm nhạc',
-      imageUrl: 'assets/images/music_festival.jpg',
-      savedDate: DateTime.now().subtract(const Duration(days: 7)),
-    ),
-  ];
-
-  List<FavouriteItem> get filteredFavourites {
-    if (_selectedFilter == 'Tất cả') {
-      return _favourites;
-    } else {
-      return _favourites.where((item) => item.category == _selectedFilter).toList();
-    }
-  }
-
-  int get selectedCount {
-    return _favourites.where((item) => item.isSelected).length;
-  }
+  final FavouriteController _controller = FavouriteController();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: _isSelectMode
-            ? Text('Đã chọn $selectedCount mục')
-            : const Text('Yêu thích'),
+        title: _controller.isSelectMode
+            ? Text('Đã chọn ${_controller.selectedCount} mục', style: TextStyle(fontWeight: FontWeight.w600))
+            : const Text("Danh mục yêu thích", style: TextStyle(fontWeight: FontWeight.w600)),
         actions: _buildAppBarActions(),
       ),
       body: Column(
         children: [
-          _buildCategoryFilter(),
-          Expanded(
-            child: _buildFavouritesList(),
+          // Dùng CategoryFilterBar thay vì tự build thủ công
+          CategoryFilterBar(
+            categories: _controller.categories,
+            selectedFilter: _controller.selectedFilter,
+            onFilterSelected: (category) {
+              setState(() {
+                _controller.setFilter(category);
+              });
+            },
           ),
+          Expanded(child: _buildFavouritesList()),
         ],
       ),
     );
   }
 
   List<Widget> _buildAppBarActions() {
-    if (_isSelectMode) {
+    if (_controller.isSelectMode) {
       return [
         IconButton(
           icon: const Icon(Icons.delete),
-          onPressed: selectedCount > 0 ? _deleteSelected : null,
+          onPressed: _controller.selectedCount > 0
+              ? () {
+            setState(() {
+              _controller.deleteSelected();
+            });
+          }
+              : null,
           tooltip: 'Xóa các mục đã chọn',
         ),
         IconButton(
           icon: const Icon(Icons.close),
-          onPressed: _cancelSelection,
+          onPressed: () {
+            setState(() {
+              _controller.cancelSelection();
+            });
+          },
           tooltip: 'Hủy chọn',
         ),
       ];
@@ -132,7 +71,13 @@ class _PageFavouriteState extends State<PageFavourite> {
       return [
         IconButton(
           icon: const Icon(Icons.select_all),
-          onPressed: _favourites.isNotEmpty ? _enableSelectMode : null,
+          onPressed: _controller.favourites.isNotEmpty
+              ? () {
+            setState(() {
+              _controller.enableSelectMode();
+            });
+          }
+              : null,
           tooltip: 'Chọn nhiều',
         ),
         IconButton(
@@ -144,52 +89,9 @@ class _PageFavouriteState extends State<PageFavourite> {
     }
   }
 
-  Widget _buildCategoryFilter() {
-    return Container(
-      height: 50,
-      margin: const EdgeInsets.only(top: 8),
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: _categories.length,
-        padding: const EdgeInsets.symmetric(horizontal: 8),
-        itemBuilder: (context, index) {
-          final category = _categories[index];
-          final isSelected = _selectedFilter == category;
-
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: FilterChip(
-              label: Text(category),
-              selected: isSelected,
-              onSelected: (selected) {
-                if (selected) {
-                  setState(() {
-                    _selectedFilter = category;
-                  });
-                }
-              },
-              selectedColor: Theme.of(context).primaryColor.withOpacity(0.2),
-              labelStyle: TextStyle(
-                color: isSelected ? Theme.of(context).primaryColor : Colors.grey[600],
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-                side: BorderSide(
-                  color: isSelected
-                      ? Theme.of(context).primaryColor
-                      : Colors.grey.withOpacity(0.3),
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
   Widget _buildFavouritesList() {
-    if (filteredFavourites.isEmpty) {
+    final filtered = _controller.filteredFavourites;
+    if (filtered.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -201,9 +103,9 @@ class _PageFavouriteState extends State<PageFavourite> {
             ),
             const SizedBox(height: 16),
             Text(
-              _selectedFilter == 'Tất cả'
+              _controller.selectedFilter == 'Tất cả'
                   ? 'Chưa có mục yêu thích nào'
-                  : 'Chưa có mục yêu thích nào trong $_selectedFilter',
+                  : 'Chưa có mục yêu thích nào trong ${_controller.selectedFilter}',
               style: TextStyle(
                 fontSize: 16,
                 color: Colors.grey[600],
@@ -216,15 +118,19 @@ class _PageFavouriteState extends State<PageFavourite> {
 
     return ListView.builder(
       padding: const EdgeInsets.all(12),
-      itemCount: filteredFavourites.length,
+      itemCount: filtered.length,
       itemBuilder: (context, index) {
-        final item = filteredFavourites[index];
+        final item = filtered[index];
         return _buildFavouriteCard(item);
       },
     );
   }
 
   Widget _buildFavouriteCard(FavouriteItem item) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final categoryColor = CategoryUtils.getCategoryColor(item.category, context);
+    final categoryIcon = CategoryUtils.getIconForCategory(item.category);
+
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       elevation: 2,
@@ -232,8 +138,20 @@ class _PageFavouriteState extends State<PageFavourite> {
         borderRadius: BorderRadius.circular(12),
       ),
       child: InkWell(
-        onTap: _isSelectMode ? () => _toggleItemSelection(item) : () => _viewItem(item),
-        onLongPress: !_isSelectMode ? () => _toggleItemSelection(item) : null,
+        onTap: _controller.isSelectMode
+            ? () {
+          setState(() {
+            _controller.toggleItemSelection(item);
+          });
+        }
+            : () => _viewItem(item),
+        onLongPress: !_controller.isSelectMode
+            ? () {
+          setState(() {
+            _controller.toggleItemSelection(item);
+          });
+        }
+            : null,
         borderRadius: BorderRadius.circular(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -241,22 +159,23 @@ class _PageFavouriteState extends State<PageFavourite> {
             Stack(
               children: [
                 ClipRRect(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                  borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(12)),
                   child: AspectRatio(
                     aspectRatio: 16 / 9,
                     child: Container(
-                      color: Colors.grey[300],
+                      color: isDarkMode ? Colors.grey[800] : Colors.grey[200],
                       child: Center(
                         child: Icon(
-                          _getCategoryIcon(item.category),
+                          categoryIcon,
                           size: 48,
-                          color: Colors.grey[600],
+                          color: categoryColor,
                         ),
                       ),
                     ),
                   ),
                 ),
-                if (_isSelectMode)
+                if (_controller.isSelectMode)
                   Positioned(
                     top: 8,
                     right: 8,
@@ -270,9 +189,13 @@ class _PageFavouriteState extends State<PageFavourite> {
                       child: Padding(
                         padding: const EdgeInsets.all(4.0),
                         child: Icon(
-                          item.isSelected ? Icons.check : Icons.circle_outlined,
+                          item.isSelected
+                              ? Icons.check
+                              : Icons.circle_outlined,
                           size: 20,
-                          color: item.isSelected ? Colors.white : Colors.grey[600],
+                          color: item.isSelected
+                              ? Colors.white
+                              : Colors.grey[600],
                         ),
                       ),
                     ),
@@ -286,9 +209,10 @@ class _PageFavouriteState extends State<PageFavourite> {
                 children: [
                   Text(
                     item.title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
+                      color: isDarkMode ? Colors.white : Colors.black87,
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -297,7 +221,7 @@ class _PageFavouriteState extends State<PageFavourite> {
                   Text(
                     item.description,
                     style: TextStyle(
-                      color: Colors.grey[700],
+                      color: isDarkMode ? Colors.grey[300] : Colors.grey[700],
                       fontSize: 14,
                     ),
                     maxLines: 2,
@@ -308,16 +232,18 @@ class _PageFavouriteState extends State<PageFavourite> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: Colors.grey[200],
+                          color: CategoryUtils.getCategoryBackgroundColor(item.category, context),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
                           item.category,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
+                            color: categoryColor,
                           ),
                         ),
                       ),
@@ -333,48 +259,16 @@ class _PageFavouriteState extends State<PageFavourite> {
                 ],
               ),
             ),
-            if (!_isSelectMode)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.share),
-                      onPressed: () => _shareItem(item),
-                      tooltip: 'Chia sẻ',
-                      iconSize: 20,
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.delete_outline),
-                      onPressed: () => _confirmDelete(item),
-                      tooltip: 'Xóa khỏi yêu thích',
-                      iconSize: 20,
-                    ),
-                  ],
-                ),
-              ),
+            // Sử dụng ItemActionBar cho các nút hành động
+            ItemActionBar(
+              isVisible: !_controller.isSelectMode,
+              onShare: () => _shareItem(item),
+              onDelete: () => _confirmDelete(item),
+            ),
           ],
         ),
       ),
     );
-  }
-
-  IconData _getCategoryIcon(String category) {
-    switch (category) {
-      case 'Thể thao':
-        return Icons.sports_soccer;
-      case 'Giải trí':
-        return Icons.movie;
-      case 'Khoa học':
-        return Icons.science;
-      case 'Công nghệ':
-        return Icons.computer;
-      case 'Âm nhạc':
-        return Icons.music_note;
-      default:
-        return Icons.article;
-    }
   }
 
   String _formatSavedDate(DateTime date) {
@@ -395,14 +289,12 @@ class _PageFavouriteState extends State<PageFavourite> {
   }
 
   void _viewItem(FavouriteItem item) {
-    // Implement navigation to detail page
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Mở bài viết: ${item.title}')),
     );
   }
 
   void _shareItem(FavouriteItem item) {
-    // Implement share functionality
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Đang chia sẻ: ${item.title}')),
     );
@@ -423,88 +315,20 @@ class _PageFavouriteState extends State<PageFavourite> {
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
-                _deleteFavouriteItem(item);
-              },
-              child: const Text('Xóa'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _deleteFavouriteItem(FavouriteItem item) {
-    setState(() {
-      _favourites.removeWhere((favItem) => favItem.id == item.id);
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Đã xóa khỏi danh sách yêu thích'),
-        action: SnackBarAction(
-          label: 'Hoàn tác',
-          onPressed: () {
-            setState(() {
-              _favourites.add(item);
-            });
-          },
-        ),
-      ),
-    );
-  }
-
-  void _toggleItemSelection(FavouriteItem item) {
-    setState(() {
-      if (!_isSelectMode) {
-        _isSelectMode = true;
-        item.isSelected = true;
-      } else {
-        item.isSelected = !item.isSelected;
-        // If no items are selected anymore, exit select mode
-        if (selectedCount == 0) {
-          _isSelectMode = false;
-        }
-      }
-    });
-  }
-
-  void _enableSelectMode() {
-    setState(() {
-      _isSelectMode = true;
-    });
-  }
-
-  void _cancelSelection() {
-    setState(() {
-      for (var item in _favourites) {
-        item.isSelected = false;
-      }
-      _isSelectMode = false;
-    });
-  }
-
-  void _deleteSelected() {
-    final selectedItems = _favourites.where((item) => item.isSelected).toList();
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Xác nhận xóa'),
-          content: Text('Bạn có chắc muốn xóa ${selectedItems.length} mục đã chọn khỏi danh sách yêu thích?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Hủy'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
                 setState(() {
-                  _favourites.removeWhere((item) => item.isSelected);
-                  _isSelectMode = false;
+                  _controller.deleteFavouriteItem(item);
                 });
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text('Đã xóa ${selectedItems.length} mục khỏi danh sách yêu thích'),
+                    content: const Text('Đã xóa khỏi danh sách yêu thích'),
+                    action: SnackBarAction(
+                      label: 'Hoàn tác',
+                      onPressed: () {
+                        setState(() {
+                          _controller.favourites.add(item);
+                        });
+                      },
+                    ),
                   ),
                 );
               },
@@ -543,7 +367,9 @@ class _PageFavouriteState extends State<PageFavourite> {
                 title: const Text('Mới nhất trước'),
                 onTap: () {
                   Navigator.pop(context);
-                  _sortByDate(true);
+                  setState(() {
+                    _controller.sortByDate(true);
+                  });
                 },
               ),
               ListTile(
@@ -551,7 +377,9 @@ class _PageFavouriteState extends State<PageFavourite> {
                 title: const Text('Cũ nhất trước'),
                 onTap: () {
                   Navigator.pop(context);
-                  _sortByDate(false);
+                  setState(() {
+                    _controller.sortByDate(false);
+                  });
                 },
               ),
               ListTile(
@@ -559,7 +387,9 @@ class _PageFavouriteState extends State<PageFavourite> {
                 title: const Text('Theo tiêu đề (A-Z)'),
                 onTap: () {
                   Navigator.pop(context);
-                  _sortByTitle(true);
+                  setState(() {
+                    _controller.sortByTitle(true);
+                  });
                 },
               ),
               ListTile(
@@ -567,7 +397,9 @@ class _PageFavouriteState extends State<PageFavourite> {
                 title: const Text('Theo tiêu đề (Z-A)'),
                 onTap: () {
                   Navigator.pop(context);
-                  _sortByTitle(false);
+                  setState(() {
+                    _controller.sortByTitle(false);
+                  });
                 },
               ),
             ],
@@ -575,25 +407,5 @@ class _PageFavouriteState extends State<PageFavourite> {
         );
       },
     );
-  }
-
-  void _sortByDate(bool newestFirst) {
-    setState(() {
-      if (newestFirst) {
-        _favourites.sort((a, b) => b.savedDate.compareTo(a.savedDate));
-      } else {
-        _favourites.sort((a, b) => a.savedDate.compareTo(b.savedDate));
-      }
-    });
-  }
-
-  void _sortByTitle(bool ascending) {
-    setState(() {
-      if (ascending) {
-        _favourites.sort((a, b) => a.title.compareTo(b.title));
-      } else {
-        _favourites.sort((a, b) => b.title.compareTo(a.title));
-      }
-    });
   }
 }

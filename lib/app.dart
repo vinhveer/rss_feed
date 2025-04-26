@@ -10,9 +10,6 @@ class App extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Obx(() => Text(appController.currentTitle, style: TextStyle(fontWeight: FontWeight.w600),)),
-      ),
       body: Obx(() => appController.currentPage),
       bottomNavigationBar: Obx(
             () => BottomNavigationBar(
