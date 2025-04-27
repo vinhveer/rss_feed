@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:rss_feed/pages/account_pages/page_account_info.dart';
 import 'package:rss_feed/pages/account_pages/page_backup_restore.dart';
 import 'package:rss_feed/pages/account_pages/page_change_password.dart';
+import 'package:rss_feed/pages/account_pages/page_sign_up.dart';
 
 import 'package:rss_feed/pages/settings_pages/page_choose_topic.dart';
 import 'package:rss_feed/pages/explore_pages/page_explore.dart';
@@ -45,6 +46,7 @@ class AppController extends GetxController {
   void goToBackupAndRestore() => Get.to(() => PageBackupRestore());
   void goToAccountInfo() => Get.to(() => PageAccountInfo());
   void goToChangePassword() => Get.to(() => PageChangePassword());
+  void goToSignUp() => Get.to(() => PageSignUp());
 
   // Cập nhật trạng thái cuộn
   void updateScrollStatus(double offset) => _isScrolled.value = offset > 0;

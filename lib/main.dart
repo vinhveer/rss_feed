@@ -1,26 +1,38 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'controllers/app_controller.dart';
 import 'controllers/color_controller.dart';
+import 'controllers/auth_controller.dart';
 import 'app.dart';
 
-void main() {
-  // Initialize both controllers
-  Get.put(AppController());
-  Get.put(ColorController());
-  runApp(MyApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Supabase
+  await Supabase.initialize(
+    url: 'https://gykrrtrxzocmjusucnmj.supabase.co',
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd5a3JydHJ4em9jbWp1c3Vjbm1qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ0MzA1ODMsImV4cCI6MjA2MDAwNjU4M30.d5Q8Qzm9yeBaTSM9vOjK-7jGMznnbGUD7HfIzJTdJAE',
+  );
+
+  // Initialize controllers
+  Get.put(AppController(), permanent: true);
+  Get.put(ColorController(), permanent: true);
+  final authController = Get.put(AuthController(), permanent: true);
+
+  runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
-  MyApp({super.key});
+// Global Supabase client for app-wide use
+final supabase = Supabase.instance.client;
 
-  // Retrieve controllers
-  final AppController appController = Get.find<AppController>();
-  final ColorController colorController = Get.find<ColorController>();
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // Listen to both theme and primary color changes
+    final colorController = Get.find<ColorController>();
+
     return Obx(() {
       final primary = colorController.currentSwatch;
       final mode = colorController.currentThemeMode;
@@ -28,8 +40,6 @@ class MyApp extends StatelessWidget {
       return GetMaterialApp(
         title: 'RSS Feed App',
         debugShowCheckedModeBanner: false,
-
-        // Light theme
         theme: ThemeData(
           brightness: Brightness.light,
           colorScheme: ColorScheme.light(primary: primary),
@@ -41,11 +51,8 @@ class MyApp extends StatelessWidget {
             selectedItemColor: primary,
           ),
         ),
-
-        // Dark theme
         darkTheme: ThemeData(
           brightness: Brightness.dark,
-          primarySwatch: primary,
           colorScheme: ColorScheme.dark(primary: primary),
           appBarTheme: AppBarTheme(
             iconTheme: IconThemeData(color: Colors.white),
@@ -55,7 +62,6 @@ class MyApp extends StatelessWidget {
             selectedItemColor: primary,
           ),
         ),
-
         themeMode: mode,
         home: App(),
       );
