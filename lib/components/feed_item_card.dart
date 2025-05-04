@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:rss_feed/pages/page_read.dart';
-import '../models/feed_item.dart';
+import '../models/feed_item_local.dart';
 import 'category_utils.dart';
 
 class FeedItemCard extends StatelessWidget {

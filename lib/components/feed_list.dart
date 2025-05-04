@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../models/feed_item.dart';
+import '../models/feed_item_local.dart';
 import 'feed_item_card.dart';
 
 class FeedList extends StatelessWidget {

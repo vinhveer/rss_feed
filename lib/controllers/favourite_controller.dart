@@ -1,5 +1,3 @@
-import 'package:rss_feed/models/favourite_item.dart';
-
 class FavouriteController {
   final List<String> categories = [
     'Tất cả',
@@ -117,4 +115,24 @@ class FavouriteController {
       _favourites.sort((a, b) => b.title.compareTo(a.title));
     }
   }
+}
+
+class FavouriteItem {
+  final String id;
+  final String title;
+  final String description;
+  final String category;
+  final String imageUrl;
+  final DateTime savedDate;
+  bool isSelected;
+
+  FavouriteItem({
+    required this.id,
+    required this.title,
+    required this.description,
+    required this.category,
+    required this.imageUrl,
+    required this.savedDate,
+    this.isSelected = false,
+  });
 }

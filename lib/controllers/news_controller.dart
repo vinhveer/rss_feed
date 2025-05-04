@@ -1,6 +1,5 @@
 import 'package:get/get.dart';
-import 'package:rss_feed/models/newspaper.dart';
-import 'package:rss_feed/models/topic.dart';
+import 'package:rss_feed/models/newspaper_local.dart';
 
 class NewsController extends GetxController {
   final RxList<Newspaper> newspapers = <Newspaper>[].obs;
@@ -45,3 +44,32 @@ List<Topic> topicsList = [
   Topic(id: 4, name: 'Kinh doanh', iconName: 'business'),
   Topic(id: 5, name: 'Công nghệ', iconName: 'computer'),
 ];
+
+
+class Topic {
+  final int id;
+  final String name;
+  final String iconName;
+
+  Topic({
+    required this.id,
+    required this.name,
+    required this.iconName,
+  });
+
+  factory Topic.fromJson(Map<String, dynamic> json) {
+    return Topic(
+      id: json['id'],
+      name: json['name'],
+      iconName: json['iconName'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'iconName': iconName,
+    };
+  }
+}

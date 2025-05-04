@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'controllers/app_controller.dart';
@@ -8,22 +9,22 @@ import 'app.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: '.env');
 
   // Initialize Supabase
   await Supabase.initialize(
-    url: 'https://gykrrtrxzocmjusucnmj.supabase.co',
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd5a3JydHJ4em9jbWp1c3Vjbm1qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ0MzA1ODMsImV4cCI6MjA2MDAwNjU4M30.d5Q8Qzm9yeBaTSM9vOjK-7jGMznnbGUD7HfIzJTdJAE',
+    url: dotenv.env['SUPABASE_URL']!,
+    anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
   );
 
   // Initialize controllers
   Get.put(AppController(), permanent: true);
   Get.put(ColorController(), permanent: true);
-  final authController = Get.put(AuthController(), permanent: true);
+  Get.put(AuthController(), permanent: true);
 
   runApp(const MyApp());
 }
 
-// Global Supabase client for app-wide use
 final supabase = Supabase.instance.client;
 
 class MyApp extends StatelessWidget {

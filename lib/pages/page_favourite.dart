@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../controllers/favourite_controller.dart';
-import '../models/favourite_item.dart';
 
 import '../components/category_filter_bar.dart';
 import '../components/item_action_bar.dart';

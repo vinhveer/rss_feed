@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:rss_feed/models/feed_item.dart';
+import 'package:rss_feed/models/feed_item_local.dart';
 
 class FeedController extends ChangeNotifier {
   int _selectedCategoryIndex = 0;
