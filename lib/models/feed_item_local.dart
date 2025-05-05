@@ -4,6 +4,7 @@ class FeedItem {
   final String timeAgo;
   final String imageUrl;
   final String category;
+  final String link;
 
   FeedItem({
     required this.title,
@@ -11,6 +12,7 @@ class FeedItem {
     required this.timeAgo,
     required this.imageUrl,
     required this.category,
+    required this.link,
   });
 
   // Factory to create from JSON (for future API integration)
@@ -21,6 +23,7 @@ class FeedItem {
       timeAgo: json['timeAgo'] ?? '',
       imageUrl: json['imageUrl'] ?? '',
       category: json['category'] ?? '',
+      link: json['link'] ?? '',
     );
   }
 
@@ -32,6 +35,7 @@ class FeedItem {
       'timeAgo': timeAgo,
       'imageUrl': imageUrl,
       'category': category,
+      'link': link,
     };
   }
 }
