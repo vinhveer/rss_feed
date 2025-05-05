@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
 import '../controllers/favourite_controller.dart';
 
 import '../components/category_filter_bar.dart';
@@ -259,10 +260,19 @@ class _PageFavouriteState extends State<PageFavourite> {
               ),
             ),
             // Sử dụng ItemActionBar cho các nút hành động
+            // ItemActionBar(
+            //   isVisible: !_controller.isSelectMode,
+            //   onShare: () => _shareItem(item),
+            //   onDelete: () => _confirmDelete(item),
+            // ),
             ItemActionBar(
               isVisible: !_controller.isSelectMode,
-              onShare: () => _shareItem(item),
-              onDelete: () => _confirmDelete(item),
+              onLeftAction: () => _shareItem(item.title),
+              onRightAction: () => _confirmDelete(item),
+              leftIcon: Icons.share,
+              rightIcon: Icons.delete_outline,
+              leftTooltip: 'Chia sẻ',
+              rightTooltip: 'Xóa khỏi yêu thích',
             ),
           ],
         ),
@@ -293,9 +303,11 @@ class _PageFavouriteState extends State<PageFavourite> {
     );
   }
 
-  void _shareItem(FavouriteItem item) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Đang chia sẻ: ${item.title}')),
+  void _shareItem(String title) {
+    SharePlus.instance.share(
+      ShareParams(
+        text: 'Tin tức thú vị hôm nay! $title',
+      ),
     );
   }
 

@@ -22,6 +22,7 @@ class FeedController extends ChangeNotifier {
       timeAgo: '2 giờ trước',
       imageUrl: 'assets/images/planet.jpg',
       category: 'Khoa học',
+      link: '.com'
     ),
     FeedItem(
       title: 'Giải vô địch bóng đá thế giới 2026 sẽ được tổ chức tại đâu?',
@@ -29,6 +30,7 @@ class FeedController extends ChangeNotifier {
       timeAgo: '5 giờ trước',
       imageUrl: 'assets/images/football.jpg',
       category: 'Thể thao',
+      link: '.com'
     ),
     FeedItem(
       title: 'Album mới của Taylor Swift phá vỡ kỷ lục trên các nền tảng nghe nhạc',
@@ -36,6 +38,7 @@ class FeedController extends ChangeNotifier {
       timeAgo: '1 ngày trước',
       imageUrl: 'assets/images/music.jpg',
       category: 'Giải trí',
+      link: '.com'
     ),
     FeedItem(
       title: 'Xu hướng AI mới nhất năm 2025 bạn cần biết',
@@ -43,6 +46,7 @@ class FeedController extends ChangeNotifier {
       timeAgo: '3 giờ trước',
       imageUrl: 'assets/images/ai.jpg',
       category: 'Công nghệ',
+      link: '.com'
     ),
     FeedItem(
       title: 'Top 10 điểm du lịch hot nhất mùa hè 2025',
@@ -50,6 +54,7 @@ class FeedController extends ChangeNotifier {
       timeAgo: '6 giờ trước',
       imageUrl: 'assets/images/travel.jpg',
       category: 'Nóng',
+      link: '.com'
     ),
   ];
 
