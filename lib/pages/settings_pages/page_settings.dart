@@ -130,18 +130,6 @@ class PageSettings extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               ListTile(
-                leading: const Icon(Icons.backup_outlined),
-                title: const Text('Sao lưu và khôi phục'),
-                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                onTap: () => appController.goToBackupAndRestore(),
-              ),
-              ListTile(
-                leading: const Icon(Icons.person),
-                title: const Text('Thông tin cá nhân'),
-                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                onTap: () => appController.goToAccountInfo(),
-              ),
-              ListTile(
                 leading: const Icon(Icons.password_rounded),
                 title: const Text('Thay đổi mật khẩu'),
                 trailing: const Icon(Icons.arrow_forward_ios, size: 16),
@@ -152,6 +140,12 @@ class PageSettings extends StatelessWidget {
                 title: const Text('Đăng xuất'),
                 trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                 onTap: () {},
+              ),
+              ListTile(
+                leading: const Icon(Icons.logout),
+                title: const Text('Test pages'),
+                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                onTap: () => appController.goToPageTest(),
               ),
             ],
           ),

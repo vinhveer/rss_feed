@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:rss_feed/controllers/feed_controller.dart';
-import '../components/category_selection_bar.dart';
-import '../components/feed_list.dart';
+import '../../components/category_selection_bar.dart';
+import '../../components/feed_list.dart';
 
 class PageHome extends StatefulWidget {
   const PageHome({super.key});
@@ -18,7 +18,15 @@ class _PageHomeState extends State<PageHome> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Trang chủ", style: TextStyle(fontWeight: FontWeight.w600),)
+        title: Text("Trang chủ", style: TextStyle(fontWeight: FontWeight.w600),),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.search),
+            onPressed: () {
+              // Handle search action
+            }
+          )
+        ],
       ),
       body: Column(
         children: [

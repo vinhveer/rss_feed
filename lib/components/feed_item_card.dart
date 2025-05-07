@@ -56,7 +56,6 @@ class FeedItemCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final categoryColor = CategoryUtils.getCategoryColor(item.category, context);
-    final categoryIcon = CategoryUtils.getIconForCategory(item.category);
 
     return Card(
       margin: const EdgeInsets.only(bottom: 16),

@@ -44,26 +44,6 @@ class UserService {
       throw UserException('Failed to update profile: ${res.error!.message}');
     }
   }
-
-  Future<void> logUserActivity({
-    required String action,
-    Map<String, dynamic>? metadata,
-  }) async {
-    final userId = _supabase.auth.currentUser?.id;
-    if (userId == null) {
-      throw UserException('User is not authenticated');
-    }
-
-    final res = await _supabase.from('activity_logs').insert({
-      'user_id': userId,
-      'action': action,
-      'metadata': metadata ?? {},
-    });
-
-    if (res.error != null) {
-      throw UserException('Failed to log activity: ${res.error!.message}');
-    }
-  }
 }
 
 class UserException implements Exception {

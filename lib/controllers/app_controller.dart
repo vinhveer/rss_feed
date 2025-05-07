@@ -8,12 +8,13 @@ import 'package:rss_feed/pages/account_pages/page_sign_up.dart';
 import 'package:rss_feed/pages/settings_pages/page_choose_topic.dart';
 import 'package:rss_feed/pages/explore_pages/page_explore.dart';
 import 'package:rss_feed/pages/page_favourite.dart';
-import 'package:rss_feed/pages/page_home.dart';
+import 'package:rss_feed/pages/home_pages/page_home.dart';
 import 'package:rss_feed/pages/account_pages/page_login.dart';
 import 'package:rss_feed/pages/page_read.dart';
-import 'package:rss_feed/pages/page_settings.dart';
+import 'package:rss_feed/pages/settings_pages/page_settings.dart';
 import 'package:rss_feed/pages/settings_pages/color_scheme_settings_page.dart';
 import 'package:rss_feed/pages/settings_pages/theme_mode_setting_page.dart';
+import 'package:rss_feed/pages/test_pages/test_pages_home.dart';
 
 class AppController extends GetxController {
   // Trang hiện tại và trạng thái cuộn
@@ -47,6 +48,7 @@ class AppController extends GetxController {
   void goToAccountInfo() => Get.to(() => PageAccountInfo());
   void goToChangePassword() => Get.to(() => PageChangePassword());
   void goToSignUp() => Get.to(() => PageSignUp());
+  void goToPageTest() => Get.to(() => TestPagesHome());
 
   // Cập nhật trạng thái cuộn
   void updateScrollStatus(double offset) => _isScrolled.value = offset > 0;

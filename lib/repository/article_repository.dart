@@ -7,14 +7,50 @@ class ArticleRepository {
       : _client = client ?? SupabaseService.instance.client;
 
   final SupabaseClient _client;
-  final String _tableName = 'articles';
+  final String _tableName = 'article';
 
   /// Fetches all articles from the database
   Future<List<ArticleRow>> getAllArticles() async {
-    final response = await _client.from(_tableName).select();
-    return (response as List)
-        .map((json) => ArticleRow.fromJson(json))
-        .toList();
+    try {
+      // In ra trạng thái kết nối
+      print("Supabase connection status: ${_client.auth.currentSession != null ? 'Authenticated' : 'Not authenticated'}");
+
+      // Thực hiện truy vấn với thời gian timeout dài hơn
+      final response = await _client
+          .from(_tableName)
+          .select('*')  // Chỉ rõ tất cả các cột
+          .timeout(const Duration(seconds: 10));
+
+      // In ra response để debug
+      print("Supabase raw response: $response");
+      print("Response type: ${response.runtimeType}");
+      print("Response length: ${response is List ? response.length : 'not a list'}");
+
+      if (response == null) {
+        print("Response is null");
+        return [];
+      }
+
+      if (response is List && response.isEmpty) {
+        print("Response is an empty list");
+        return [];
+      }
+
+      // Thử parse từng record và ghi log nếu có lỗi
+      final articles = <ArticleRow>[];
+      for (var item in response as List) {
+        try {
+          articles.add(ArticleRow.fromJson(item));
+        } catch (e) {
+          print("Error parsing item $item: $e");
+        }
+      }
+
+      return articles;
+    } catch (e) {
+      print("Error in getAllArticles: $e");
+      throw SupabaseException(message: e.toString());
+    }
   }
 
   /// Fetches articles by RSS ID
@@ -37,35 +73,6 @@ class ArticleRepository {
         .maybeSingle();
     if (response == null) return null;
     return ArticleRow.fromJson(response);
-  }
-
-  /// Creates a new article
-  Future<ArticleRow> createArticle(ArticleRow article) async {
-    final response = await _client
-        .from(_tableName)
-        .insert(article.toJson())
-        .select()
-        .single();
-    return ArticleRow.fromJson(response);
-  }
-
-  /// Updates an existing article
-  Future<ArticleRow> updateArticle(ArticleRow article) async {
-    final response = await _client
-        .from(_tableName)
-        .update(article.toJson())
-        .eq(ArticleRow.field.articleId, article.articleId)
-        .select()
-        .single();
-    return ArticleRow.fromJson(response);
-  }
-
-  /// Deletes an article by ID
-  Future<void> deleteArticle(int articleId) async {
-    await _client
-        .from(_tableName)
-        .delete()
-        .eq(ArticleRow.field.articleId, articleId);
   }
 
   /// Searches articles by title
