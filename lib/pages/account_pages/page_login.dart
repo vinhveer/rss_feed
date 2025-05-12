@@ -4,6 +4,8 @@ import 'package:rss_feed/controllers/app_controller.dart';
 import 'package:rss_feed/controllers/auth_controller.dart';
 import 'package:rss_feed/controllers/color_controller.dart';
 
+import '../../app.dart';
+
 class PageLogin extends StatefulWidget {
   const PageLogin({super.key});
 
@@ -36,31 +38,27 @@ class _PageLoginState extends State<PageLogin> {
 
     try {
       await _authController.signInWithEmail(email, password);
-      Get.back(); // Quay về trang trước đó sau khi đăng nhập thành công
+      appController.changePage(3);
     } catch (e) {
       Get.snackbar(
         'Lỗi đăng nhập',
-        e.toString(),
+        e.toString().replaceAll('Exception: ', ''),
         snackPosition: SnackPosition.BOTTOM,
       );
+      return;
     }
+
+    Get.offAll(() => App());
+    appController.changePage(3);
+
   }
 
   void _handleEmailSignUp() {
     appController.goToSignUp();
   }
 
-  void _handleGoogleSignIn() async {
-    try {
-      await _authController.signInWithGoogle();
-      Get.back(); // Quay về trang trước đó sau khi đăng nhập thành công
-    } catch (e) {
-      Get.snackbar(
-        'Lỗi đăng nhập',
-        'Không thể đăng nhập với Google: ${e.toString()}',
-        snackPosition: SnackPosition.BOTTOM,
-      );
-    }
+  void _handleForgetPassword(){
+    appController.goToForgetPassword();
   }
 
   @override
@@ -181,35 +179,13 @@ class _PageLoginState extends State<PageLogin> {
                     ),
                   ),
                   const SizedBox(height: 16),
-
-                  // Đăng nhập bằng Google
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton(
-                      onPressed: _handleGoogleSignIn,
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text("Tiếp tục với Google"),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
                   // Quên mật khẩu
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       TextButton(
                         onPressed: () {
-                          // TODO: Implement forgot password
+                          _handleForgetPassword();
                         },
                         child: Text(
                           "Quên mật khẩu?",
@@ -224,7 +200,7 @@ class _PageLoginState extends State<PageLogin> {
           ),
           if (_authController.isLoading.value)
             Container(
-              color: Colors.black.withOpacity(0.3),
+              color: Colors.black,
               child: const Center(
                 child: CircularProgressIndicator(),
               ),

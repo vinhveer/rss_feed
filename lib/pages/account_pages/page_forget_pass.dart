@@ -3,14 +3,14 @@ import 'package:get/get.dart';
 import 'package:rss_feed/pages/account_pages/page_otp_forget_pass.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-class TestPageThuy extends StatefulWidget {
-  const TestPageThuy({super.key});
+class PageForgetPass extends StatefulWidget {
+  const PageForgetPass({super.key});
 
   @override
-  State<TestPageThuy> createState() => _PageForgotPasswordState();
+  State<PageForgetPass> createState() => _PageForgotPasswordState();
 }
 
-class _PageForgotPasswordState extends State<TestPageThuy> {
+class _PageForgotPasswordState extends State<PageForgetPass> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   bool _isLoading = false;

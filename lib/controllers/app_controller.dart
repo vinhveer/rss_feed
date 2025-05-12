@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:rss_feed/pages/account_pages/page_account_info.dart';
 import 'package:rss_feed/pages/account_pages/page_backup_restore.dart';
 import 'package:rss_feed/pages/account_pages/page_change_password.dart';
+import 'package:rss_feed/pages/account_pages/page_forget_pass.dart';
 import 'package:rss_feed/pages/account_pages/page_sign_up.dart';
 
 import 'package:rss_feed/pages/settings_pages/page_choose_topic.dart';
@@ -41,12 +42,14 @@ class AppController extends GetxController {
   // Điều hướng
   void goToChooseTopic() => Get.to(() => PageChooseTopic());
   void goToPageRead() => Get.to(() => PageRead());
+  void goToPageSetting() => Get.to(() => PageSettings());
   void goToColorSchemeSettingsPage() => Get.to(() => ColorSchemeSettingsPage());
   void goToThemeModeSettingPage() => Get.to(() => ThemeModeSettingPage());
   void goToLoginPage() => Get.to(() => PageLogin());
   void goToBackupAndRestore() => Get.to(() => PageBackupRestore());
   void goToAccountInfo() => Get.to(() => PageAccountInfo());
   void goToChangePassword() => Get.to(() => PageChangePassword());
+  void goToForgetPassword() => Get.to(() => PageForgetPass());
   void goToSignUp() => Get.to(() => PageSignUp());
   void goToPageTest() => Get.to(() => TestPagesHome());
 

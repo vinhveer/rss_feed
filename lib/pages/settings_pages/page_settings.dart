@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:rss_feed/controllers/app_controller.dart';
 import 'package:rss_feed/controllers/color_controller.dart';
+import 'package:supabase_auth_ui/supabase_auth_ui.dart';
+
+import '../../app.dart';
+import '../../controllers/auth_controller.dart';
+
 
 class PageSettings extends StatelessWidget {
   const PageSettings({super.key});
@@ -39,15 +44,18 @@ class PageSettings extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              'Bạn chưa đăng nhập',
-                              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                            Text("Xin chào", style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),),
+                            Text(
+                              (Supabase.instance.client.auth.currentUser?.email?.isNotEmpty ?? false)
+                                  ? Supabase.instance.client.auth.currentUser!.email!
+                                  : 'Vui lòng đăng nhập để đồng bộ dữ liệu',
+                              style: const TextStyle(fontSize: 14, color: Colors.grey),
                             ),
                             const SizedBox(height: 4),
-                            Text(
-                              'Vui lòng đăng nhập để đồng bộ dữ liệu',
-                              style: TextStyle(fontSize: 14, color: Colors.grey),
-                            ),
+                            // Text(
+                            //   'Vui lòng đăng nhập để đồng bộ dữ liệu',
+                            //   style: TextStyle(fontSize: 14, color: Colors.grey),
+                            // ),
                           ],
                         ),
                       ),
@@ -113,34 +121,54 @@ class PageSettings extends StatelessWidget {
                 trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                 onTap: () => appController.goToChooseTopic(),
               ),
-
               const SizedBox(height: 16),
-
-              // Cá nhân hoá
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Text(
-                  'HÀNH ĐỘNG ĐỐI VỚI TÀI KHOẢN',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.primary,
+              (Supabase.instance.client.auth.currentUser?.email?.isNotEmpty ?? false)
+                  ? Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'HÀNH ĐỘNG ĐỐI VỚI TÀI KHOẢN',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-              ),
-              const SizedBox(height: 10),
-              ListTile(
-                leading: const Icon(Icons.password_rounded),
-                title: const Text('Thay đổi mật khẩu'),
-                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                onTap: () => appController.goToChangePassword(),
-              ),
-              ListTile(
-                leading: const Icon(Icons.logout),
-                title: const Text('Đăng xuất'),
-                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                onTap: () {},
-              ),
+                  const SizedBox(height: 10),
+                  ListTile(
+                    leading: const Icon(Icons.password_rounded),
+                    title: const Text('Thay đổi mật khẩu'),
+                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                    onTap: () => appController.goToChangePassword(),
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.logout),
+                    title: const Text('Đăng xuất'),
+                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                    onTap: () async {
+                      Supabase.instance.client.auth.currentUser?.email;
+
+                      final authController = Get.find<AuthController>();
+
+                      await authController.signOut();
+
+                      if (!context.mounted) return;
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Đã đăng xuất')),
+                      );
+                      Get.offAll(() => App());
+                      appController.changePage(3);
+                    },
+                  ),
+                ],
+              )
+                  : Container(),
               ListTile(
                 leading: const Icon(Icons.logout),
                 title: const Text('Test pages'),
