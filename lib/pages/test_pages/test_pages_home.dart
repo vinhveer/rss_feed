@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:rss_feed/pages/test_pages/test_page_my.dart';
 import 'package:rss_feed/pages/test_pages/test_page_thuy.dart';
 import 'package:rss_feed/pages/test_pages/test_page_tien.dart';
+import 'package:rss_feed/pages/test_pages/test_repository_tien.dart';
 import 'package:rss_feed/pages/test_pages/test_page_vinh.dart';
 
 class TestPagesHome extends StatelessWidget {

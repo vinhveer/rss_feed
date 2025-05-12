@@ -49,6 +49,11 @@ class AuthController extends GetxController {
     } finally {
       isLoading.value = false;
     }
+
+    final session = Supabase.instance.client.auth.currentSession;
+    final accessToken = session?.accessToken;
+
+    Get.log(accessToken.toString());
   }
 
   /// Sign up from anonymous to email/password
