@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 import '../controllers/favourite_controller.dart';
-
 import '../components/category_filter_bar.dart';
 import '../components/item_action_bar.dart';
 import '../components/category_utils.dart';
@@ -27,7 +26,6 @@ class _PageFavouriteState extends State<PageFavourite> {
       ),
       body: Column(
         children: [
-          // Dùng CategoryFilterBar thay vì tự build thủ công
           CategoryFilterBar(
             categories: _controller.categories,
             selectedFilter: _controller.selectedFilter,
@@ -96,33 +94,46 @@ class _PageFavouriteState extends State<PageFavourite> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.favorite_border,
-              size: 64,
-              color: Colors.grey[400],
-            ),
+            Icon(Icons.favorite_border, size: 64, color: Colors.grey[400]),
             const SizedBox(height: 16),
             Text(
               _controller.selectedFilter == 'Tất cả'
                   ? 'Chưa có mục yêu thích nào'
                   : 'Chưa có mục yêu thích nào trong ${_controller.selectedFilter}',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey[600],
-              ),
+              style: TextStyle(fontSize: 16, color: Colors.grey[600]),
             ),
           ],
         ),
       );
     }
 
-    return ListView.builder(
+    final grouped = <String, List<FavouriteItem>>{};
+    for (var item in filtered) {
+      grouped.putIfAbsent(item.category, () => []).add(item);
+    }
+
+    return ListView(
       padding: const EdgeInsets.all(12),
-      itemCount: filtered.length,
-      itemBuilder: (context, index) {
-        final item = filtered[index];
-        return _buildFavouriteCard(item);
-      },
+      children: grouped.entries.map((entry) {
+        final category = entry.key;
+        final items = entry.value;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Text(
+                category,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            ...items.map((item) => _buildFavouriteCard(item)).toList(),
+          ],
+        );
+      }).toList(),
     );
   }
 
@@ -159,8 +170,7 @@ class _PageFavouriteState extends State<PageFavourite> {
             Stack(
               children: [
                 ClipRRect(
-                  borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(12)),
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
                   child: AspectRatio(
                     aspectRatio: 16 / 9,
                     child: Container(
@@ -259,12 +269,6 @@ class _PageFavouriteState extends State<PageFavourite> {
                 ],
               ),
             ),
-            // Sử dụng ItemActionBar cho các nút hành động
-            // ItemActionBar(
-            //   isVisible: !_controller.isSelectMode,
-            //   onShare: () => _shareItem(item),
-            //   onDelete: () => _confirmDelete(item),
-            // ),
             ItemActionBar(
               isVisible: !_controller.isSelectMode,
               onLeftAction: () => _shareItem(item.title),

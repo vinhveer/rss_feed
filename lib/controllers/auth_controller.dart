@@ -49,6 +49,7 @@ class AuthController extends GetxController {
     } finally {
       isLoading.value = false;
     }
+
     final session = Supabase.instance.client.auth.currentSession;
     final accessToken = session?.accessToken;
 
