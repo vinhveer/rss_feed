@@ -11,7 +11,6 @@ class AuthService {
 
   Future<User?> ensureAnonymousSession() async {
     final session = _supabase.auth.currentSession;
-
     if (session == null) {
       try {
         final AuthResponse res = await _supabase.auth.signInAnonymously(
