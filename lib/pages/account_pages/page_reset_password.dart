@@ -1,23 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:rss_feed/pages/settings_pages/page_settings.dart';
+import 'package:rss_feed/pages/account_pages/page_login.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-class PageChangePassword extends StatefulWidget {
-  const PageChangePassword({super.key});
+class PageResetPassword extends StatefulWidget {
+  const PageResetPassword({super.key, required this.email});
+  final String email;
 
   @override
-  State<PageChangePassword> createState() => _PageChangePasswordState();
+  State<PageResetPassword> createState() => _PageResetPasswordState();
 }
 
-class _PageChangePasswordState extends State<PageChangePassword> {
+class _PageResetPasswordState extends State<PageResetPassword> {
   final _formKey = GlobalKey<FormState>();
-
-  final _currentPasswordController = TextEditingController();
   final _newPasswordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
-  bool _obscureCurrentPassword = true;
   bool _obscureNewPassword = true;
   bool _obscureConfirmPassword = true;
 
@@ -25,7 +23,6 @@ class _PageChangePasswordState extends State<PageChangePassword> {
 
   @override
   void dispose() {
-    _currentPasswordController.dispose();
     _newPasswordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
@@ -36,7 +33,7 @@ class _PageChangePasswordState extends State<PageChangePassword> {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          'Đổi mật khẩu',
+          'Đặt lại mật khẩu',
           style: TextStyle(fontWeight: FontWeight.w600),
         ),
       ),
@@ -48,41 +45,8 @@ class _PageChangePasswordState extends State<PageChangePassword> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'Để bảo vệ tài khoản của bạn, hãy đặt mật khẩu mạnh và không sử dụng lại mật khẩu cho các tài khoản khác.',
+                'Hãy nhập mật khẩu mới của bạn. Mật khẩu mới cần có ít nhất 8 ký tự và bao gồm chữ hoa, chữ thường và số.',
                 style: TextStyle(fontSize: 14, color: Colors.grey),
-              ),
-              const SizedBox(height: 20),
-
-              // Mật khẩu hiện tại
-              const Text(
-                'Mật khẩu hiện tại',
-                style: TextStyle(fontWeight: FontWeight.w500),
-              ),
-              const SizedBox(height: 8),
-              TextFormField(
-                controller: _currentPasswordController,
-                obscureText: _obscureCurrentPassword,
-                decoration: InputDecoration(
-                  hintText: 'Nhập mật khẩu hiện tại',
-                  border: const OutlineInputBorder(),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      _obscureCurrentPassword ? Icons.visibility_off : Icons.visibility,
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        _obscureCurrentPassword = !_obscureCurrentPassword;
-                      });
-                    },
-                  ),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Vui lòng nhập mật khẩu hiện tại';
-                  }
-                  return null;
-                },
               ),
               const SizedBox(height: 20),
 
@@ -98,10 +62,12 @@ class _PageChangePasswordState extends State<PageChangePassword> {
                 decoration: InputDecoration(
                   hintText: 'Nhập mật khẩu mới',
                   border: const OutlineInputBorder(),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 16),
                   suffixIcon: IconButton(
                     icon: Icon(
-                      _obscureNewPassword ? Icons.visibility_off : Icons.visibility,
+                      _obscureNewPassword ? Icons.visibility_off : Icons
+                          .visibility,
                     ),
                     onPressed: () {
                       setState(() {
@@ -148,10 +114,12 @@ class _PageChangePasswordState extends State<PageChangePassword> {
                 decoration: InputDecoration(
                   hintText: 'Nhập lại mật khẩu mới',
                   border: const OutlineInputBorder(),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 16),
                   suffixIcon: IconButton(
                     icon: Icon(
-                      _obscureConfirmPassword ? Icons.visibility_off : Icons.visibility,
+                      _obscureConfirmPassword ? Icons.visibility_off : Icons
+                          .visibility,
                     ),
                     onPressed: () {
                       setState(() {
@@ -172,16 +140,16 @@ class _PageChangePasswordState extends State<PageChangePassword> {
               ),
               const SizedBox(height: 30),
 
-              // Nút đổi mật khẩu
+              // Nút đặt lại mật khẩu
               SizedBox(
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
-                  onPressed: _isLoading ? null : _changePassword,
+                  onPressed: _isLoading ? null : _resetPassword,
                   child: _isLoading
                       ? const CircularProgressIndicator()
                       : const Text(
-                    'Đổi mật khẩu',
+                    'Đặt lại mật khẩu',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                 ),
@@ -193,51 +161,39 @@ class _PageChangePasswordState extends State<PageChangePassword> {
     );
   }
 
-  void _changePassword() async {
+  void _resetPassword() async {
     if (_formKey.currentState!.validate()) {
       setState(() {
         _isLoading = true;
       });
 
       try {
-        final email = Supabase.instance.client.auth.currentUser?.email;
-        final currentPassword = _currentPasswordController.text.trim();
         final newPassword = _newPasswordController.text.trim();
 
-        if (email == null) throw Exception('Không tìm thấy người dùng');
-
-        // Xác thực lại mật khẩu cũ bằng cách đăng nhập lại
-        final signInResponse = await Supabase.instance.client.auth.signInWithPassword(
-          email: email,
-          password: currentPassword,
-        );
-
-        if (signInResponse.user == null) {
-          throw Exception('Mật khẩu hiện tại không chính xác');
-        }
-
-        // Cập nhật mật khẩu mới
-        final updateResponse = await Supabase.instance.client.auth.updateUser(
+        // Đặt lại mật khẩu mới qua Supabase
+        final res = await Supabase.instance.client.auth.updateUser(
           UserAttributes(password: newPassword),
         );
 
-        if (updateResponse.user == null) {
-          throw Exception('Không thể đổi mật khẩu');
+        if (res.user == null) {
+          // Nếu không thể đặt lại mật khẩu, ném lỗi
+          throw Exception('Không thể đặt lại mật khẩu');
         }
 
+        // Hiển thị thông báo thành công
         Get.snackbar(
           'Thành công',
-          'Đổi mật khẩu thành công',
+          'Đặt lại mật khẩu thành công!',
           backgroundColor: Colors.green,
           colorText: Colors.white,
           snackPosition: SnackPosition.BOTTOM,
         );
 
-        Get.off(() => PageSettings());
+        Get.to(() => PageLogin());
       } catch (e) {
         Get.snackbar(
           'Lỗi',
-          'Không thể đổi mật khẩu: ${e.toString()}',
+          'Không thể đặt lại mật khẩu: ${e.toString()}',
           backgroundColor: Colors.red,
           colorText: Colors.white,
           snackPosition: SnackPosition.BOTTOM,
