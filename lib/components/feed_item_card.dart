@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 import 'package:rss_feed/components/item_action_bar.dart';
 import 'package:rss_feed/pages/page_read.dart';
 import '../models/feed_item_local.dart';
-import 'category_utils.dart';
 import 'package:share_plus/share_plus.dart';
 
 class FeedItemCard extends StatelessWidget {
@@ -27,24 +26,24 @@ class FeedItemCard extends StatelessWidget {
   Future<void> _showUninterestedDialog(BuildContext context, String title) async {
     return showDialog<void>(
       context: context,
-      barrierDismissible: false, //
+      barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text("Bạn có chắc chắn không quan tâm?"),
-          content: Text("Chúng tôi sẽ hạn chế hiển thị nội dung này."),
+          title: const Text("Bạn có chắc chắn không quan tâm?"),
+          content: const Text("Chúng tôi sẽ hạn chế hiển thị nội dung này."),
           actions: <Widget>[
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
                 print("Không quan tâm: $title");
               },
-              child: Text("Có"),
+              child: const Text("Có"),
             ),
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: Text("Không"),
+              child: const Text("Không"),
             ),
           ],
         );
@@ -55,7 +54,6 @@ class FeedItemCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final categoryColor = CategoryUtils.getCategoryColor(item.category, context);
 
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
@@ -65,7 +63,7 @@ class FeedItemCard extends StatelessWidget {
       ),
       child: InkWell(
         onTap: () {
-          Get.to(() => PageRead());
+          Get.to(() => PageRead(url: item.link));
         },
         borderRadius: BorderRadius.circular(12),
         child: Column(
@@ -75,16 +73,6 @@ class FeedItemCard extends StatelessWidget {
               borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
               child: AspectRatio(
                 aspectRatio: 16 / 9,
-                // child: Container(
-                //   color: isDarkMode ? Colors.grey[800] : Colors.grey[200],
-                //   child: Center(
-                //     child: Icon(
-                //       categoryIcon,
-                //       size: 48,
-                //       color: categoryColor,
-                //     ),
-                //   ),
-                // ),
                 child: Image.network(
                   item.imageUrl,
                   fit: BoxFit.cover,
@@ -94,7 +82,7 @@ class FeedItemCard extends StatelessWidget {
                       fit: BoxFit.cover,
                     );
                   },
-                )
+                ),
               ),
             ),
             Padding(
@@ -113,7 +101,10 @@ class FeedItemCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 8),
-                  Row(
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 4,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       Text(
                         item.source,
@@ -122,7 +113,6 @@ class FeedItemCard extends StatelessWidget {
                           fontWeight: FontWeight.w500,
                         ),
                       ),
-                      const SizedBox(width: 8),
                       Container(
                         width: 4,
                         height: 4,
@@ -131,7 +121,6 @@ class FeedItemCard extends StatelessWidget {
                           shape: BoxShape.circle,
                         ),
                       ),
-                      const SizedBox(width: 8),
                       Text(
                         item.timeAgo,
                         style: TextStyle(
@@ -141,27 +130,32 @@ class FeedItemCard extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
+
+                  // Hiển thị danh sách keywords
+                  if (item.keywords.isNotEmpty)
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: item.keywords.map((kw) {
+                        return Chip(
+                          label: Text(
+                            kw,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          backgroundColor: isDarkMode ? Colors.grey[800] : Colors.grey[200],
+                          padding: const EdgeInsets.symmetric(horizontal: 1, vertical: 1),
+                        );
+                      }).toList(),
                     ),
-                    decoration: BoxDecoration(
-                      color: CategoryUtils.getCategoryBackgroundColor(item.category, context),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      item.category,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: categoryColor,
-                      ),
-                    ),
-                  ),
+
+                  const SizedBox(height: 8),
+
                   ItemActionBar(
                     onLeftAction: () => _shareItem(item.title),
-                    onRightAction: () =>  _showUninterestedDialog(context,item.title),
+                    onRightAction: () => _showUninterestedDialog(context, item.title),
                     leftIcon: Icons.share,
                     rightIcon: Icons.visibility_off_outlined,
                     leftTooltip: 'Chia sẻ',

@@ -41,7 +41,7 @@ class AppController extends GetxController {
 
   // Điều hướng
   void goToChooseTopic() => Get.to(() => PageChooseTopic());
-  void goToPageRead() => Get.to(() => PageRead());
+  void goToPageRead(String url) => Get.to(() => PageRead(url: url));
   void goToPageSetting() => Get.to(() => PageSettings());
   void goToColorSchemeSettingsPage() => Get.to(() => ColorSchemeSettingsPage());
   void goToThemeModeSettingPage() => Get.to(() => ThemeModeSettingPage());

@@ -1,62 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:rss_feed/models/feed_item_local.dart';
+import '../main.dart';
 
 class FeedController extends ChangeNotifier {
   int _selectedCategoryIndex = 0;
-  final List<String> categories = [
-    'Tất cả',
-    'Nóng',
-    'Thể thao',
-    'Giải trí',
-    'Khoa học',
-    'Âm nhạc',
-    'Trò chơi',
-    'Tin tức',
-    'Công nghệ',
-  ];
-
-  final List<FeedItem> _feedItems = [
-    FeedItem(
-      title: 'NASA phát hiện hành tinh mới có khả năng chứa sự sống',
-      source: 'Khoa học Việt Nam',
-      timeAgo: '2 giờ trước',
-      imageUrl: 'assets/images/planet.jpg',
-      category: 'Khoa học',
-      link: '.com'
-    ),
-    FeedItem(
-      title: 'Giải vô địch bóng đá thế giới 2026 sẽ được tổ chức tại đâu?',
-      source: 'Thể thao 24h',
-      timeAgo: '5 giờ trước',
-      imageUrl: 'assets/images/football.jpg',
-      category: 'Thể thao',
-      link: '.com'
-    ),
-    FeedItem(
-      title: 'Album mới của Taylor Swift phá vỡ kỷ lục trên các nền tảng nghe nhạc',
-      source: 'Âm nhạc Plus',
-      timeAgo: '1 ngày trước',
-      imageUrl: 'assets/images/music.jpg',
-      category: 'Giải trí',
-      link: '.com'
-    ),
-    FeedItem(
-      title: 'Xu hướng AI mới nhất năm 2025 bạn cần biết',
-      source: 'Tech Review',
-      timeAgo: '3 giờ trước',
-      imageUrl: 'assets/images/ai.jpg',
-      category: 'Công nghệ',
-      link: '.com'
-    ),
-    FeedItem(
-      title: 'Top 10 điểm du lịch hot nhất mùa hè 2025',
-      source: 'Travel & Life',
-      timeAgo: '6 giờ trước',
-      imageUrl: 'assets/images/travel.jpg',
-      category: 'Nóng',
-      link: '.com'
-    ),
-  ];
+  List<String> categories = ['Tất cả'];
+  List<FeedItem> _feedItems = [];
 
   // Getters
   int get selectedCategoryIndex => _selectedCategoryIndex;
@@ -72,25 +21,79 @@ class FeedController extends ChangeNotifier {
     }
   }
 
-  // Methods
   void selectCategory(int index) {
-    if (index != _selectedCategoryIndex && index >= 0 && index < categories.length) {
+    if (index != _selectedCategoryIndex &&
+        index >= 0 &&
+        index < categories.length) {
       _selectedCategoryIndex = index;
       notifyListeners();
     }
   }
 
-  // Method to add new feed items (for future use)
-  void addFeedItem(FeedItem item) {
-    _feedItems.add(item);
-    notifyListeners();
+  Future<void> loadData() async {
+    try {
+      // Fetch categories
+      final categoryResponse = await supabase.from('topic').select('topic_name');
+      final topicNames = (categoryResponse as List)
+          .map((e) => e['topic_name'] as String)
+          .toList();
+      categories = ['Tất cả', ...topicNames];
+
+      // Fetch articles with join to rss and topic
+      final articleResponse = await supabase
+          .from('article')
+          .select('''
+            article_id,
+            title,
+            link,
+            image_url,
+            pub_date,
+            description,
+            rss:rss_id (
+              rss_link,
+              topic:topic_id (
+                topic_name
+              )
+            ),
+            article_keyword (
+              keyword:keyword_id (
+                keyword_name
+              )
+            )
+          ''')
+          .order('article_id', ascending: false);
+
+      _feedItems = (articleResponse as List).map((json) {
+        final rss = json['rss'];
+        final topic = rss != null ? rss['topic'] : null;
+
+        final keywordList = (json['article_keyword'] as List?)?.map((kw) {
+          return kw['keyword']?['keyword_name'] as String?;
+        }).whereType<String>().toList() ?? [];
+
+        return FeedItem(
+          title: json['title'] ?? 'Không có tiêu đề',
+          source: json['description'] ?? 'Mô tả',
+          timeAgo: json['pub_date'] ?? 'Vừa xong',
+          imageUrl: json['image_url'] ?? 'assets/images/placeholder.jpg',
+          category: topic?['topic_name'] ?? 'Không rõ danh mục',
+          link: json['link'] ?? '#',
+          keywords: keywordList,
+        );
+      }).toList();
+
+      notifyListeners();
+    } catch (e) {
+      return;
+    }
   }
 
-  // Method to refresh feed with new data (for future use)
   Future<void> refreshFeed() async {
-    // Here you would typically fetch new data from an API
-    // For now just simulate a delay
-    await Future.delayed(const Duration(seconds: 1));
+    await loadData();
+  }
+
+  void addFeedItem(FeedItem item) {
+    _feedItems.add(item);
     notifyListeners();
   }
 }

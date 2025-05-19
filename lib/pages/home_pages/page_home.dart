@@ -15,6 +15,15 @@ class _PageHomeState extends State<PageHome> {
   final FeedController _feedController = FeedController();
 
   @override
+  void initState() {
+    super.initState();
+
+    _feedController.loadData().then((_) {
+      setState(() {});
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
