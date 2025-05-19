@@ -1,210 +1,183 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:get/get.dart';
+import 'package:rss_feed/pages/reading_button_pages/reading_button.dart';
+import '../repository/article_content_repository.dart';
+import '../controllers/reading_controller.dart'; // Đặt file controller ở đây
 
-class PageRead extends StatelessWidget {
-  const PageRead({super.key});
+class ArticleData {
+  final String title;
+  final String text;
+  final List<dynamic> images;
+  final String pubDate;
+  final String author;
+
+  ArticleData({
+    required this.title,
+    required this.text,
+    required this.images,
+    required this.pubDate,
+    required this.author,
+  });
+
+  factory ArticleData.fromJson(Map<String, dynamic> json) {
+    return ArticleData(
+      title: json['title'] ?? '',
+      text: json['text'] ?? '',
+      images: (json['images'] ?? []) as List<dynamic>,
+      pubDate: json['pubDate'] ?? '',
+      author: json['author'] ?? '',
+    );
+  }
+}
+
+class PageRead extends StatefulWidget {
+  final String url;
+
+  const PageRead({super.key, required this.url});
+
+  @override
+  State<PageRead> createState() => _PageReadState();
+}
+
+class _PageReadState extends State<PageRead> {
+  ArticleData? _article;
+  bool _loading = true;
+  late final ReadingController _readingController;
+
+  @override
+  void initState() {
+    super.initState();
+    _readingController = Get.put(ReadingController(), tag: widget.url);
+
+    _loadArticle();
+  }
+
+  Future<void> _loadArticle() async {
+    final repo = ArticleContentRepository();
+    final result = await repo.fetchArticleContent(widget.url);
+    setState(() {
+      _article = result != null ? ArticleData.fromJson(result) : null;
+      _loading = false;
+    });
+  }
+
+  @override
+  void dispose() {
+    _readingController.stop();
+    Get.delete<ReadingController>(tag: widget.url);
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (_loading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    if (_article == null) {
+      return const Scaffold(body: Center(child: Text("Không thể tải bài viết.")));
+    }
+
+    final article = _article!;
+    final mainImage = article.images.isNotEmpty &&
+        Uri.tryParse(article.images.first.toString())?.hasAbsolutePath == true &&
+        article.images.first.toString().startsWith('http')
+        ? article.images.first.toString()
+        : null;
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        // Không có title
-        actions: [
-          // Nút Dịch
-          IconButton(
-            icon: const Icon(Icons.translate),
-            tooltip: 'Dịch',
-            onPressed: () {},
-          ),
-          // Nút Cỡ chữ
-          IconButton(
-            icon: const Icon(Icons.text_fields),
-            tooltip: 'Cỡ chữ',
-            onPressed: () {},
-          ),
-          // Nút Chế độ đọc (icon trái đất)
-          IconButton(
-            icon: const Icon(Icons.public),
-            tooltip: 'Chế độ đọc',
-            onPressed: () {},
-          ),
-          // Nút Chia sẻ
-          IconButton(
-            icon: const Icon(Icons.share),
-            tooltip: 'Chia sẻ',
-            onPressed: () {},
-          ),
-          const SizedBox(width: 8),
+        actions: const [
+          IconButton(icon: Icon(Icons.translate), tooltip: 'Dịch', onPressed: null),
+          IconButton(icon: Icon(Icons.text_fields), tooltip: 'Cỡ chữ', onPressed: null),
+          IconButton(icon: Icon(Icons.public), tooltip: 'Chế độ đọc', onPressed: null),
+          IconButton(icon: Icon(Icons.share), tooltip: 'Chia sẻ', onPressed: null),
+          SizedBox(width: 8),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Tiêu đề bài báo
-            const Text(
-              "Công nghệ AI sẽ định hình tương lai như thế nào trong thập kỷ tới",
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 12),
-
-            // Thông tin tác giả và thời gian
-            Row(
+      body: Stack(
+        children: [
+          SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const CircleAvatar(
-                  radius: 12,
-                  backgroundImage: NetworkImage(
-                      "https://randomuser.me/api/portraits/men/32.jpg"
+                Text(article.title, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 12),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const CircleAvatar(
+                      radius: 12,
+                      backgroundImage: NetworkImage("https://randomuser.me/api/portraits/men/32.jpg"),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(article.author,
+                              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey[700]),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1),
+                          Text(article.pubDate, style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                if (mainImage != null)
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.network(
+                      mainImage,
+                      height: 220,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
+                    ),
+                  ),
+                const SizedBox(height: 20),
+                MarkdownBody(
+                  data: article.text,
+                  selectable: true,
+                  imageBuilder: (uri, title, alt) => Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    child: Image.network(
+                      uri.toString(),
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        color: Colors.grey[300],
+                        height: 200,
+                        width: double.infinity,
+                        child: const Icon(Icons.broken_image, size: 60),
+                      ),
+                    ),
+                  ),
+                  styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
+                    p: const TextStyle(fontSize: 18, height: 1.6),
                   ),
                 ),
-                const SizedBox(width: 8),
-                Text(
-                  "Nguyễn Văn A",
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey[700],
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Text(
-                  "19/04/2025",
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 12,
-                  ),
-                ),
+                const SizedBox(height: 150),
               ],
             ),
-
-            const SizedBox(height: 20),
-
-            // Ảnh bài báo
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: Image.network(
-                "https://images.unsplash.com/photo-1677442135197-9eec44d211ba?q=80&w=2070",
-                height: 220,
-                width: double.infinity,
-                fit: BoxFit.cover,
-              ),
+          ),
+          // Sử dụng ReadingButton với controller GetX
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 16,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: ReadingButton(controller: _readingController, url: widget.url),
             ),
-
-            const SizedBox(height: 20),
-
-            // Nội dung bài báo
-            const Text(
-              "Trí tuệ nhân tạo (AI) đang thay đổi cách chúng ta sống, làm việc và tương tác với thế giới xung quanh. Trong thập kỷ tới, AI sẽ tiếp tục phát triển mạnh mẽ và ảnh hưởng đến mọi lĩnh vực của đời sống.",
-              style: TextStyle(
-                fontSize: 18,
-                height: 1.6,
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            const Text(
-              "1. AI trong y tế",
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              "Trí tuệ nhân tạo đang cách mạng hóa lĩnh vực y tế thông qua việc cải thiện chẩn đoán, phát triển thuốc và cá nhân hóa điều trị. Các hệ thống AI có thể phân tích hàng nghìn hình ảnh y tế để phát hiện các dấu hiệu của bệnh tật sớm hơn và chính xác hơn các chuyên gia con người.\n\nĐồng thời, AI đang giúp các công ty dược phẩm phát triển thuốc mới nhanh hơn và với chi phí thấp hơn. Các thuật toán học máy có thể dự đoán cách các phân tử sẽ tương tác với các mục tiêu sinh học cụ thể, giúp các nhà nghiên cứu ưu tiên các hợp chất tiềm năng cho thử nghiệm thêm.",
-              style: TextStyle(
-                fontSize: 16,
-                height: 1.6,
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            const Text(
-              "2. AI trong giáo dục",
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              "Trong lĩnh vực giáo dục, AI đang tạo ra các hệ thống học tập thích ứng có thể cá nhân hóa trải nghiệm học tập dựa trên nhu cầu và khả năng của từng học sinh. Các nền tảng AI có thể xác định lỗ hổng kiến thức và điều chỉnh tài liệu để giải quyết những lỗ hổng đó.\n\nGiáo viên cũng được hưởng lợi từ AI thông qua các công cụ tự động hóa các nhiệm vụ hành chính như chấm điểm và theo dõi tiến độ, cho phép họ tập trung nhiều thời gian hơn vào tương tác trực tiếp với học sinh.",
-              style: TextStyle(
-                fontSize: 16,
-                height: 1.6,
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            const Text(
-              "3. AI trong giao thông",
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              "Phương tiện tự lái đang dần trở thành hiện thực nhờ những tiến bộ trong AI, máy học và thị giác máy tính. Các xe tự lái có tiềm năng giảm đáng kể tai nạn giao thông, giảm tắc nghẽn và cải thiện hiệu quả nhiên liệu.\n\nNgoài ô tô, AI đang được sử dụng để tối ưu hóa hệ thống giao thông công cộng, quản lý luồng giao thông và giảm tắc nghẽn trong các thành phố lớn. Các thuật toán dự đoán có thể phân tích dữ liệu lịch sử và thời gian thực để điều chỉnh tín hiệu giao thông và định tuyến phương tiện một cách hiệu quả hơn.",
-              style: TextStyle(
-                fontSize: 16,
-                height: 1.6,
-              ),
-            ),
-
-            const SizedBox(height: 150), // Để không bị che bởi floating buttons
-          ],
-        ),
+          ),
+        ],
       ),
-
-      // Các nút phía dưới
-      floatingActionButton: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        width: double.infinity,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            // Bên trái: Nút yêu thích và dấu trang
-            Row(
-              children: [
-                FloatingActionButton(
-                  heroTag: 'favorite',
-                  onPressed: () {},
-                  backgroundColor: Colors.white,
-                  elevation: 2,
-                  child: const Icon(Icons.favorite_border, color: Colors.black),
-                ),
-                const SizedBox(width: 16),
-                FloatingActionButton(
-                  heroTag: 'bookmark',
-                  onPressed: () {},
-                  backgroundColor: Colors.white,
-                  elevation: 2,
-                  child: const Icon(Icons.bookmark_border, color: Colors.black),
-                ),
-              ],
-            ),
-
-            // Giữa và bên phải: Nút play và chữ "Chế độ đọc"
-            Row(
-              children: [
-                FloatingActionButton(
-                  heroTag: 'play',
-                  onPressed: () {},
-                  backgroundColor: Colors.blue,
-                  elevation: 2,
-                  child: const Icon(Icons.play_arrow, color: Colors.white),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 }

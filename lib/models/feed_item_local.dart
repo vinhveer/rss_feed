@@ -5,6 +5,7 @@ class FeedItem {
   final String imageUrl;
   final String category;
   final String link;
+  final List<String> keywords;
 
   FeedItem({
     required this.title,
@@ -13,6 +14,7 @@ class FeedItem {
     required this.imageUrl,
     required this.category,
     required this.link,
+    this.keywords = const [],
   });
 
   // Factory to create from JSON (for future API integration)
