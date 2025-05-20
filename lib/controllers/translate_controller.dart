@@ -1,6 +1,6 @@
 import 'package:translator/translator.dart';
 
-class TranslateService {
+class TranslateController {
   final GoogleTranslator _translator = GoogleTranslator();
 
   Future<String> translate(String text, String fromLang, String toLang) async {

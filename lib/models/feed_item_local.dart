@@ -1,4 +1,5 @@
 class FeedItem {
+  final int articleId;
   final String title;
   final String source;
   final String timeAgo;
@@ -9,6 +10,7 @@ class FeedItem {
   final bool isVn;
 
   FeedItem({
+    required this.articleId,
     required this.title,
     required this.source,
     required this.timeAgo,
@@ -30,6 +32,7 @@ class FeedItem {
     }).where((kw) => kw.isNotEmpty).toList();
 
     return FeedItem(
+      articleId: json['article_id'] ?? 0,
       title: json['title'] ?? '',
       source: json['description'] ?? '',
       timeAgo: json['pub_date'] ?? '',
@@ -43,6 +46,7 @@ class FeedItem {
 
   Map<String, dynamic> toJson() {
     return {
+      'articleId': articleId,
       'title': title,
       'source': source,
       'timeAgo': timeAgo,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:get/get.dart';
 import 'package:rss_feed/pages/reading_button_pages/reading_button.dart';
+import '../controllers/browser_controller.dart';
 import '../controllers/share_controller.dart';
 import '../controllers/translate_controller.dart';
 import '../models/article.dart';
@@ -11,8 +12,9 @@ import '../controllers/reading_controller.dart';
 class PageRead extends StatefulWidget {
   final String url;
   final bool isVn;
+  final int articleId;
 
-  const PageRead({super.key, required this.url, required this.isVn});
+  const PageRead({super.key, required this.url, required this.isVn, required this.articleId,});
 
   @override
   State<PageRead> createState() => _PageReadState();
@@ -26,8 +28,9 @@ class _PageReadState extends State<PageRead> {
   bool _isTranslated = false;
 
   late final ReadingController _readingController;
-  final TranslateService _translateService = TranslateService();
+  final TranslateController _translateService = TranslateController();
   final ShareController _shareController = Get.put(ShareController());
+  final BrowserController _browserController = Get.put(BrowserController());
 
 
   double _fontSize = 18;
@@ -82,7 +85,7 @@ class _PageReadState extends State<PageRead> {
         _isTranslated = true;
       });
     } catch (e) {
-      print("Translation failed: $e");
+      return;
     } finally {
       setState(() {
         _isTranslating = false;
@@ -144,7 +147,11 @@ class _PageReadState extends State<PageRead> {
               });
             },
           ),
-          IconButton(icon: const Icon(Icons.public), tooltip: 'Chế độ đọc', onPressed: null),
+          IconButton(
+            icon: const Icon(Icons.public),
+            tooltip: 'Chế độ đọc',
+            onPressed: () => _browserController.openInBrowser(context, widget.url),
+          ),
           IconButton(
             icon: const Icon(Icons.share),
             tooltip: 'Chia sẻ',
@@ -214,6 +221,7 @@ class _PageReadState extends State<PageRead> {
                 controller: _readingController,
                 url: widget.url,
                 isVn: widget.isVn,
+                articleId: widget.articleId,
               ),
             ),
           ),
@@ -227,7 +235,7 @@ class _ArticleMarkdown extends StatelessWidget {
   final String text;
   final double fontSize;
 
-  const _ArticleMarkdown({super.key, required this.text, required this.fontSize});
+  const _ArticleMarkdown({required this.text, required this.fontSize});
 
   @override
   Widget build(BuildContext context) {
