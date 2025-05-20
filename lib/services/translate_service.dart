@@ -36,7 +36,6 @@ class TranslateService {
 
       return translatedLines.join('\n');
     } catch (e) {
-      print("Translation error: $e");
       return text;
     }
   }

@@ -110,7 +110,7 @@ $text
     _sentences = _splitSentences(cleaned);
     currentIndex.value = 0;
 
-    await _flutterTts.setLanguage("vi-VN");
+    await _flutterTts.setLanguage(isVn ? "vi-VN" : "en-US");
     await _flutterTts.setSpeechRate(speechRate.value);
     await _flutterTts.setVolume(1.0);
     await _flutterTts.setPitch(1.0);
