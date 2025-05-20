@@ -100,12 +100,14 @@ class ReadingButton extends StatelessWidget {
                 ),
                 const SizedBox(width: 16),
                 FloatingActionButton(
-                  heroTag: 'bookmark',
-                  onPressed: () {},
+                  heroTag: 'not_interested',
+                  onPressed: () {
+                  },
                   backgroundColor: Colors.white,
                   elevation: 2,
-                  child: const Icon(Icons.bookmark_border, color: Colors.black),
+                  child: const Icon(Icons.block, color: Colors.black),
                 ),
+
               ],
             ),
             FloatingActionButton(

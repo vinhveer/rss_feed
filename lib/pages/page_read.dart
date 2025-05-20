@@ -2,36 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:get/get.dart';
 import 'package:rss_feed/pages/reading_button_pages/reading_button.dart';
+import '../controllers/share_controller.dart';
 import '../controllers/translate_controller.dart';
+import '../models/article.dart';
 import '../repository/article_content_repository.dart';
 import '../controllers/reading_controller.dart';
-
-
-class ArticleData {
-  final String title;
-  final String text;
-  final List<dynamic> images;
-  final String pubDate;
-  final String author;
-
-  ArticleData({
-    required this.title,
-    required this.text,
-    required this.images,
-    required this.pubDate,
-    required this.author,
-  });
-
-  factory ArticleData.fromJson(Map<String, dynamic> json) {
-    return ArticleData(
-      title: json['title'] ?? '',
-      text: json['text'] ?? '',
-      images: (json['images'] ?? []) as List<dynamic>,
-      pubDate: json['pubDate'] ?? '',
-      author: json['author'] ?? '',
-    );
-  }
-}
 
 class PageRead extends StatefulWidget {
   final String url;
@@ -52,6 +27,10 @@ class _PageReadState extends State<PageRead> {
 
   late final ReadingController _readingController;
   final TranslateService _translateService = TranslateService();
+  final ShareController _shareController = Get.put(ShareController());
+
+
+  double _fontSize = 18;
 
   @override
   void initState() {
@@ -156,9 +135,21 @@ class _PageReadState extends State<PageRead> {
             tooltip: _isTranslated ? 'Xem bản gốc' : 'Dịch bài viết',
             onPressed: _toggleTranslation,
           ),
-          IconButton(icon: const Icon(Icons.text_fields), tooltip: 'Cỡ chữ', onPressed: null),
+          IconButton(
+            icon: const Icon(Icons.text_fields),
+            tooltip: 'Tăng cỡ chữ',
+            onPressed: () {
+              setState(() {
+                _fontSize += 2;
+              });
+            },
+          ),
           IconButton(icon: const Icon(Icons.public), tooltip: 'Chế độ đọc', onPressed: null),
-          IconButton(icon: const Icon(Icons.share), tooltip: 'Chia sẻ', onPressed: null),
+          IconButton(
+            icon: const Icon(Icons.share),
+            tooltip: 'Chia sẻ',
+            onPressed: _article == null ? null : () => _shareController.shareItem(_article!.title),
+          ),
           const SizedBox(width: 8),
         ],
       ),
@@ -208,7 +199,7 @@ class _PageReadState extends State<PageRead> {
                     ),
                   ),
                 const SizedBox(height: 20),
-                _ArticleMarkdown(text: article.text),
+                _ArticleMarkdown(text: article.text, fontSize: _fontSize),
                 const SizedBox(height: 150),
               ],
             ),
@@ -234,8 +225,9 @@ class _PageReadState extends State<PageRead> {
 
 class _ArticleMarkdown extends StatelessWidget {
   final String text;
+  final double fontSize;
 
-  const _ArticleMarkdown({super.key, required this.text});
+  const _ArticleMarkdown({super.key, required this.text, required this.fontSize});
 
   @override
   Widget build(BuildContext context) {
@@ -256,7 +248,7 @@ class _ArticleMarkdown extends StatelessWidget {
         ),
       ),
       styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
-        p: const TextStyle(fontSize: 18, height: 1.6),
+        p: TextStyle(fontSize: fontSize, height: 1.6),
       ),
     );
   }

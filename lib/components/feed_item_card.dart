@@ -35,7 +35,6 @@ class FeedItemCard extends StatelessWidget {
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
-                print("Không quan tâm: $title");
               },
               child: const Text("Có"),
             ),
@@ -157,7 +156,7 @@ class FeedItemCard extends StatelessWidget {
                     onLeftAction: () => _shareItem(item.title),
                     onRightAction: () => _showUninterestedDialog(context, item.title),
                     leftIcon: Icons.share,
-                    rightIcon: Icons.visibility_off_outlined,
+                    rightIcon: Icons.block,
                     leftTooltip: 'Chia sẻ',
                     rightTooltip: 'Không quan tâm',
                     isVisible: true,
