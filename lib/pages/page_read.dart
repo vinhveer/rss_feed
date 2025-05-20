@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:get/get.dart';
 import 'package:rss_feed/pages/reading_button_pages/reading_button.dart';
+import '../controllers/translate_controller.dart';
 import '../repository/article_content_repository.dart';
 import '../controllers/reading_controller.dart';
-import '../services/translate_service.dart';
+
 
 class ArticleData {
   final String title;
