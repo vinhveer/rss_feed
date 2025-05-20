@@ -6,6 +6,9 @@ class ReadingController extends GetxController {
   final ArticleContentRepository _repository = ArticleContentRepository();
   final FlutterTts _flutterTts = FlutterTts();
 
+  final bool isVn;
+  ReadingController({required this.isVn});
+
   // Rx variables for UI binding
   final RxBool isReading = false.obs;
   final RxBool isCompleted = false.obs;
@@ -75,7 +78,7 @@ class ReadingController extends GetxController {
   }
 
   /// Đọc bài báo từ URL
-  Future<void> readArticle(String articleUrl) async {
+  Future<void> readArticle(String articleUrl,  {required bool isVn}) async {
     isCompleted.value = false;
     isReading.value = false;
     _currentUrl = articleUrl;

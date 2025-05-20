@@ -11,15 +11,19 @@ class PageHome extends StatefulWidget {
 }
 
 class _PageHomeState extends State<PageHome> {
-  // Create a controller instance
   final FeedController _feedController = FeedController();
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
+    _loadFeed();
+  }
 
-    _feedController.loadData().then((_) {
-      setState(() {});
+  Future<void> _loadFeed() async {
+    await _feedController.loadData();
+    setState(() {
+      _isLoading = false;
     });
   }
 
@@ -27,36 +31,34 @@ class _PageHomeState extends State<PageHome> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Trang chủ", style: TextStyle(fontWeight: FontWeight.w600),),
+        title: const Text("Trang chủ", style: TextStyle(fontWeight: FontWeight.w600)),
         actions: [
           IconButton(
-            icon: Icon(Icons.search),
+            icon: const Icon(Icons.search),
             onPressed: () {
-              // Handle search action
-            }
-          )
+              // TODO: search action
+            },
+          ),
         ],
       ),
-      body: Column(
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
         children: [
-          // Replace custom implementation with CategorySelectionBar
           CategorySelectionBar(
             categories: _feedController.categories,
-            selectedIndex: _feedController.selectedCategoryIndex,
-            onCategorySelected: (index) {
+            selectedCategory: _feedController.selectedCategory,
+            onCategorySelected: (category) {
               setState(() {
-                _feedController.selectCategory(index);
+                _feedController.selectCategory(category);
               });
             },
           ),
-
-          // Replace custom implementation with FeedList
           Expanded(
             child: FeedList(
               items: _feedController.filteredFeedItems,
               emptyCategory: _feedController.selectedCategory,
               onItemTap: (item) {
-                // Handle item tap - you can add navigation logic here
                 debugPrint('Tapped on: ${item.title}');
               },
             ),

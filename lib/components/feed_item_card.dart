@@ -63,7 +63,7 @@ class FeedItemCard extends StatelessWidget {
       ),
       child: InkWell(
         onTap: () {
-          Get.to(() => PageRead(url: item.link));
+          Get.to(() => PageRead(url: item.link ,isVn: item.isVn));
         },
         borderRadius: BorderRadius.circular(12),
         child: Column(

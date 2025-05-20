@@ -5,7 +5,8 @@ import 'package:rss_feed/controllers/reading_controller.dart';
 class ReadingButton extends StatelessWidget {
   final ReadingController controller;
   final String url;
-  const ReadingButton({super.key, required this.controller, required this.url});
+  final bool isVn;
+  const ReadingButton({super.key, required this.controller, required this.url, required this.isVn,});
 
   @override
   Widget build(BuildContext context) {
@@ -112,7 +113,7 @@ class ReadingButton extends StatelessWidget {
               backgroundColor: Colors.blue,
               child: const Icon(Icons.play_arrow, color: Colors.white),
               onPressed: () async {
-                await controller.readArticle(url);
+                await controller.readArticle(url, isVn: isVn);
               },
             ),
           ],
