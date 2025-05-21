@@ -1,7 +1,7 @@
 class ArticleData {
   final String title;
   final String text;
-  final List<String> images;
+  final List<dynamic> images;
   final String pubDate;
   final String author;
 
@@ -15,11 +15,11 @@ class ArticleData {
 
   factory ArticleData.fromJson(Map<String, dynamic> json) {
     return ArticleData(
-      title: json['title'] ?? 'Không rõ',
+      title: json['title'] ?? '',
       text: json['text'] ?? '',
-      images: List<String>.from(json['images'] ?? []),
-      pubDate: json['pubDate'] ?? 'Không rõ',
-      author: json['author'] ?? 'Không rõ',
+      images: (json['images'] ?? []) as List<dynamic>,
+      pubDate: json['pubDate'] ?? '',
+      author: json['author'] ?? '',
     );
   }
 }

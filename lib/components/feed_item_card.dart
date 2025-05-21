@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:rss_feed/components/item_action_bar.dart';
 import 'package:rss_feed/pages/page_read.dart';
+import '../controllers/article_favourite_controller.dart';
 import '../models/feed_item_local.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -23,34 +24,6 @@ class FeedItemCard extends StatelessWidget {
     );
   }
 
-  Future<void> _showUninterestedDialog(BuildContext context, String title) async {
-    return showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text("Bạn có chắc chắn không quan tâm?"),
-          content: const Text("Chúng tôi sẽ hạn chế hiển thị nội dung này."),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                print("Không quan tâm: $title");
-              },
-              child: const Text("Có"),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text("Không"),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
@@ -63,7 +36,7 @@ class FeedItemCard extends StatelessWidget {
       ),
       child: InkWell(
         onTap: () {
-          Get.to(() => PageRead(url: item.link));
+          Get.to(() => PageRead(url: item.link ,isVn: item.isVn, articleId: item.articleId,));
         },
         borderRadius: BorderRadius.circular(12),
         child: Column(
@@ -155,9 +128,16 @@ class FeedItemCard extends StatelessWidget {
 
                   ItemActionBar(
                     onLeftAction: () => _shareItem(item.title),
-                    onRightAction: () => _showUninterestedDialog(context, item.title),
+                    onRightAction: () {
+                      final favController = Get.find<ArticleFavouriteController>();
+                      favController.ignoreArticle(item.articleId);
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Đã ẩn bài viết khỏi trang chủ')),
+                      );
+                    },
                     leftIcon: Icons.share,
-                    rightIcon: Icons.visibility_off_outlined,
+                    rightIcon: Icons.block,
                     leftTooltip: 'Chia sẻ',
                     rightTooltip: 'Không quan tâm',
                     isVisible: true,

@@ -6,6 +6,9 @@ class ReadingController extends GetxController {
   final ArticleContentRepository _repository = ArticleContentRepository();
   final FlutterTts _flutterTts = FlutterTts();
 
+  final bool isVn;
+  ReadingController({required this.isVn});
+
   // Rx variables for UI binding
   final RxBool isReading = false.obs;
   final RxBool isCompleted = false.obs;
@@ -75,7 +78,7 @@ class ReadingController extends GetxController {
   }
 
   /// Đọc bài báo từ URL
-  Future<void> readArticle(String articleUrl) async {
+  Future<void> readArticle(String articleUrl,  {required bool isVn}) async {
     isCompleted.value = false;
     isReading.value = false;
     _currentUrl = articleUrl;
@@ -107,7 +110,7 @@ $text
     _sentences = _splitSentences(cleaned);
     currentIndex.value = 0;
 
-    await _flutterTts.setLanguage("vi-VN");
+    await _flutterTts.setLanguage(isVn ? "vi-VN" : "en-US");
     await _flutterTts.setSpeechRate(speechRate.value);
     await _flutterTts.setVolume(1.0);
     await _flutterTts.setPitch(1.0);

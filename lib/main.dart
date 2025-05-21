@@ -3,6 +3,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'controllers/app_controller.dart';
+import 'controllers/article_favourite_controller.dart';
 import 'controllers/color_controller.dart';
 import 'controllers/auth_controller.dart';
 import 'app.dart';
@@ -21,6 +22,7 @@ Future<void> main() async {
   Get.put(AppController(), permanent: true);
   Get.put(ColorController(), permanent: true);
   Get.put(AuthController(), permanent: true);
+  Get.put(ArticleFavouriteController());
 
   runApp(const MyApp());
 }

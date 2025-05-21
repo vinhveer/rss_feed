@@ -41,7 +41,7 @@ class AppController extends GetxController {
 
   // Điều hướng
   void goToChooseTopic() => Get.to(() => PageChooseTopic());
-  void goToPageRead(String url) => Get.to(() => PageRead(url: url));
+  void goToPageRead(String url) => Get.to(() => PageRead(url: url, isVn: true, articleId: 0,));
   void goToPageSetting() => Get.to(() => PageSettings());
   void goToColorSchemeSettingsPage() => Get.to(() => ColorSchemeSettingsPage());
   void goToThemeModeSettingPage() => Get.to(() => ThemeModeSettingPage());
@@ -55,11 +55,6 @@ class AppController extends GetxController {
 
   // Cập nhật trạng thái cuộn
   void updateScrollStatus(double offset) => _isScrolled.value = offset > 0;
-
-  @override
-  void onInit() {
-    super.onInit();
-  }
 }
 
 class PageInfo {
