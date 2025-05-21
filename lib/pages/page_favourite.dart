@@ -1,42 +1,78 @@
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 import '../controllers/favourite_controller.dart';
-import '../components/category_filter_bar.dart';
-import '../components/item_action_bar.dart';
-import '../components/category_utils.dart';
 
 class PageFavourite extends StatefulWidget {
-  const PageFavourite({super.key});
+  final String userId;
+
+  const PageFavourite({super.key, required this.userId});
 
   @override
   State<PageFavourite> createState() => _PageFavouriteState();
 }
 
+enum SortOption { aToZ, zToA, newest, oldest }
+
 class _PageFavouriteState extends State<PageFavourite> {
-  final FavouriteController _controller = FavouriteController();
+  late final FavouriteController _controller;
+  final GlobalKey<RefreshIndicatorState> _refreshKey = GlobalKey();
+  SortOption _sortOption = SortOption.newest;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = FavouriteController(userId: widget.userId);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadFavourites();
+    });
+  }
+
+  Future<void> _loadFavourites() async {
+    try {
+      await _controller.loadFavourites();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Lỗi khi tải dữ liệu: $e')),
+        );
+      }
+    }
+    if (mounted) setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: _controller.isSelectMode
-            ? Text('Đã chọn ${_controller.selectedCount} mục', style: TextStyle(fontWeight: FontWeight.w600))
-            : const Text("Danh mục yêu thích", style: TextStyle(fontWeight: FontWeight.w600)),
-        actions: _buildAppBarActions(),
-      ),
-      body: Column(
-        children: [
-          CategoryFilterBar(
-            categories: _controller.categories,
-            selectedFilter: _controller.selectedFilter,
-            onFilterSelected: (category) {
+            ? Text('Đã chọn ${_controller.selectedItems.length} mục')
+            : const Text('Danh mục yêu thích'),
+        actions: [
+          PopupMenuButton<SortOption>(
+            icon: const Icon(Icons.filter_list),
+            tooltip: 'Sắp xếp',
+            onSelected: (option) {
               setState(() {
-                _controller.setFilter(category);
+                _sortOption = option;
               });
             },
+            itemBuilder: (context) => [
+              const PopupMenuItem(value: SortOption.aToZ, child: Text('A → Z')),
+              const PopupMenuItem(value: SortOption.zToA, child: Text('Z → A')),
+              const PopupMenuItem(value: SortOption.newest, child: Text('Mới nhất')),
+              const PopupMenuItem(value: SortOption.oldest, child: Text('Cũ nhất')),
+            ],
           ),
-          Expanded(child: _buildFavouritesList()),
+          ..._buildAppBarActions(),
         ],
+      ),
+      body: RefreshIndicator(
+        key: _refreshKey,
+        onRefresh: _loadFavourites,
+        child: _controller.isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : _buildFavouritesList(),
       ),
     );
   }
@@ -46,11 +82,18 @@ class _PageFavouriteState extends State<PageFavourite> {
       return [
         IconButton(
           icon: const Icon(Icons.delete),
-          onPressed: _controller.selectedCount > 0
-              ? () {
-            setState(() {
-              _controller.deleteSelected();
-            });
+          onPressed: _controller.selectedItems.isNotEmpty
+              ? () async {
+            try {
+              await _controller.deleteSelected();
+              if (mounted) setState(() {});
+            } catch (e) {
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Lỗi khi xóa: $e')),
+                );
+              }
+            }
           }
               : null,
           tooltip: 'Xóa các mục đã chọn',
@@ -58,9 +101,8 @@ class _PageFavouriteState extends State<PageFavourite> {
         IconButton(
           icon: const Icon(Icons.close),
           onPressed: () {
-            setState(() {
-              _controller.cancelSelection();
-            });
+            _controller.cancelSelection();
+            setState(() {});
           },
           tooltip: 'Hủy chọn',
         ),
@@ -71,214 +113,198 @@ class _PageFavouriteState extends State<PageFavourite> {
           icon: const Icon(Icons.select_all),
           onPressed: _controller.favourites.isNotEmpty
               ? () {
-            setState(() {
-              _controller.enableSelectMode();
-            });
+            _controller.enableSelectMode();
+            setState(() {});
           }
               : null,
           tooltip: 'Chọn nhiều',
         ),
         IconButton(
-          icon: const Icon(Icons.sort),
-          onPressed: _showSortOptions,
-          tooltip: 'Sắp xếp',
+          icon: const Icon(Icons.refresh),
+          onPressed: () {
+            _refreshKey.currentState?.show();
+          },
+          tooltip: 'Làm mới',
         ),
       ];
     }
   }
 
   Widget _buildFavouritesList() {
-    final filtered = _controller.filteredFavourites;
-    if (filtered.isEmpty) {
+    if (_controller.favourites.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.favorite_border, size: 64, color: Colors.grey[400]),
+            const Icon(Icons.bookmark_border, size: 64, color: Colors.grey),
             const SizedBox(height: 16),
-            Text(
-              _controller.selectedFilter == 'Tất cả'
-                  ? 'Chưa có mục yêu thích nào'
-                  : 'Chưa có mục yêu thích nào trong ${_controller.selectedFilter}',
-              style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+            const Text('Chưa có bài viết yêu thích',
+                style: TextStyle(fontSize: 16, color: Colors.grey)),
+            const SizedBox(height: 16),
+            TextButton.icon(
+              onPressed: _loadFavourites,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Làm mới'),
             ),
           ],
         ),
       );
     }
 
-    final grouped = <String, List<FavouriteItem>>{};
-    for (var item in filtered) {
-      grouped.putIfAbsent(item.category, () => []).add(item);
+    var sortedList = List<FavouriteItem>.from(_controller.favourites);
+
+    switch (_sortOption) {
+      case SortOption.aToZ:
+        sortedList.sort((a, b) =>
+            a.title.trim().toLowerCase().compareTo(b.title.trim().toLowerCase()));
+        break;
+      case SortOption.zToA:
+        sortedList.sort((a, b) =>
+            b.title.trim().toLowerCase().compareTo(a.title.trim().toLowerCase()));
+        break;
+      case SortOption.newest:
+        sortedList.sort((a, b) => b.pubDate.compareTo(a.pubDate));
+        break;
+      case SortOption.oldest:
+        sortedList.sort((a, b) => a.pubDate.compareTo(b.pubDate));
+        break;
     }
 
-    return ListView(
+    return ListView.builder(
       padding: const EdgeInsets.all(12),
-      children: grouped.entries.map((entry) {
-        final category = entry.key;
-        final items = entry.value;
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: Text(
-                category,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            ...items.map((item) => _buildFavouriteCard(item)).toList(),
-          ],
-        );
-      }).toList(),
+      itemCount: sortedList.length,
+      itemBuilder: (context, index) {
+        final item = sortedList[index];
+        return _buildFavouriteCard(item);
+      },
     );
   }
 
   Widget _buildFavouriteCard(FavouriteItem item) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final categoryColor = CategoryUtils.getCategoryColor(item.category, context);
-    final categoryIcon = CategoryUtils.getIconForCategory(item.category);
+    final isSelected = _controller.isSelected(item);
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      elevation: 3,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
-        onTap: _controller.isSelectMode
-            ? () {
-          setState(() {
+        onTap: () {
+          if (_controller.isSelectMode) {
             _controller.toggleItemSelection(item);
-          });
-        }
-            : () => _viewItem(item),
+            setState(() {});
+          } else {
+            _viewItem(item);
+          }
+        },
         onLongPress: !_controller.isSelectMode
             ? () {
-          setState(() {
-            _controller.toggleItemSelection(item);
-          });
+          _controller.enableSelectMode();
+          _controller.toggleItemSelection(item);
+          setState(() {});
         }
             : null,
         borderRadius: BorderRadius.circular(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Stack(
-              children: [
-                ClipRRect(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                  child: AspectRatio(
-                    aspectRatio: 16 / 9,
-                    child: Container(
-                      color: isDarkMode ? Colors.grey[800] : Colors.grey[200],
-                      child: Center(
-                        child: Icon(
-                          categoryIcon,
-                          size: 48,
-                          color: categoryColor,
-                        ),
-                      ),
-                    ),
+        child: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: item.imageUrl != null && item.imageUrl!.isNotEmpty
+                    ? Image.network(
+                  item.imageUrl!,
+                  width: 80,
+                  height: 80,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => Container(
+                    width: 80,
+                    height: 80,
+                    color: Colors.grey.shade200,
+                    child: const Icon(Icons.broken_image, color: Colors.grey),
                   ),
+                )
+                    : Container(
+                  width: 80,
+                  height: 80,
+                  color: Colors.grey.shade200,
+                  child: const Icon(Icons.image_not_supported, color: Colors.grey),
                 ),
-                if (_controller.isSelectMode)
-                  Positioned(
-                    top: 8,
-                    right: 8,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: item.isSelected
-                            ? Theme.of(context).primaryColor
-                            : Colors.white.withOpacity(0.7),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(4.0),
-                        child: Icon(
-                          item.isSelected
-                              ? Icons.check
-                              : Icons.circle_outlined,
-                          size: 20,
-                          color: item.isSelected
-                              ? Colors.white
-                              : Colors.grey[600],
-                        ),
-                      ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.title,
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-              ],
-            ),
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    item.title,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      color: isDarkMode ? Colors.white : Colors.black87,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    item.description,
-                    style: TextStyle(
-                      color: isDarkMode ? Colors.grey[300] : Colors.grey[700],
-                      fontSize: 14,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: CategoryUtils.getCategoryBackgroundColor(item.category, context),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          item.category,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            color: categoryColor,
-                          ),
-                        ),
-                      ),
+                    if (item.description != null && item.description!.isNotEmpty) ...[
+                      const SizedBox(height: 4),
                       Text(
-                        _formatSavedDate(item.savedDate),
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[500],
-                        ),
+                        item.description!,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(fontSize: 14, color: Colors.grey.shade700),
                       ),
                     ],
+                    const SizedBox(height: 8),
+                    Text(
+                      _formatSavedDate(item.pubDate),
+                      style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                    ),
+                  ],
+                ),
+              ),
+              _controller.isSelectMode
+                  ? Padding(
+                padding: const EdgeInsets.only(left: 8.0),
+                child: Icon(
+                  isSelected ? Icons.check_circle : Icons.radio_button_unchecked,
+                  color: isSelected
+                      ? Theme.of(context).colorScheme.primary
+                      : Colors.grey,
+                ),
+              )
+                  : PopupMenuButton<String>(
+                onSelected: (value) {
+                  switch (value) {
+                    case 'delete':
+                      _confirmDelete(item);
+                      break;
+                    case 'share':
+                      _shareItem(item);
+                      break;
+                  }
+                },
+                itemBuilder: (context) => [
+                  const PopupMenuItem(
+                    value: 'share',
+                    child: Row(
+                      children: [
+                        Icon(Icons.share, size: 20),
+                        SizedBox(width: 8),
+                        Text('Chia sẻ'),
+                      ],
+                    ),
+                  ),
+                  const PopupMenuItem(
+                    value: 'delete',
+                    child: Row(
+                      children: [
+                        Icon(Icons.delete, size: 20),
+                        SizedBox(width: 8),
+                        Text('Xóa'),
+                      ],
+                    ),
                   ),
                 ],
               ),
-            ),
-            ItemActionBar(
-              isVisible: !_controller.isSelectMode,
-              onLeftAction: () => _shareItem(item.title),
-              onRightAction: () => _confirmDelete(item),
-              leftIcon: Icons.share,
-              rightIcon: Icons.delete_outline,
-              leftTooltip: 'Chia sẻ',
-              rightTooltip: 'Xóa khỏi yêu thích',
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -286,16 +312,16 @@ class _PageFavouriteState extends State<PageFavourite> {
 
   String _formatSavedDate(DateTime date) {
     final now = DateTime.now();
-    final difference = now.difference(date);
+    final diff = now.difference(date);
 
-    if (difference.inDays > 7) {
+    if (diff.inDays > 7) {
       return '${date.day}/${date.month}/${date.year}';
-    } else if (difference.inDays > 0) {
-      return '${difference.inDays} ngày trước';
-    } else if (difference.inHours > 0) {
-      return '${difference.inHours} giờ trước';
-    } else if (difference.inMinutes > 0) {
-      return '${difference.inMinutes} phút trước';
+    } else if (diff.inDays >= 1) {
+      return '${diff.inDays} ngày trước';
+    } else if (diff.inHours >= 1) {
+      return '${diff.inHours} giờ trước';
+    } else if (diff.inMinutes >= 1) {
+      return '${diff.inMinutes} phút trước';
     } else {
       return 'Vừa xong';
     }
@@ -303,124 +329,76 @@ class _PageFavouriteState extends State<PageFavourite> {
 
   void _viewItem(FavouriteItem item) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Mở bài viết: ${item.title}')),
+      SnackBar(content: Text('Xem bài viết: ${item.title}')),
     );
   }
 
-  void _shareItem(String title) {
-    SharePlus.instance.share(
-      ShareParams(
-        text: 'Tin tức thú vị hôm nay! $title',
-      ),
-    );
+  void _shareItem(FavouriteItem item) {
+    final shareText = '${item.title}\n${item.link}';
+    Share.share(shareText, subject: 'Tin tức thú vị hôm nay');
   }
 
   void _confirmDelete(FavouriteItem item) {
     showDialog(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Xác nhận xóa'),
-          content: const Text('Bạn có chắc muốn xóa mục này khỏi danh sách yêu thích?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Hủy'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                setState(() {
-                  _controller.deleteFavouriteItem(item);
-                });
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: const Text('Đã xóa khỏi danh sách yêu thích'),
-                    action: SnackBarAction(
-                      label: 'Hoàn tác',
-                      onPressed: () {
-                        setState(() {
-                          _controller.favourites.add(item);
-                        });
-                      },
-                    ),
-                  ),
-                );
-              },
-              child: const Text('Xóa'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _showSortOptions() {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (BuildContext context) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Padding(
-                padding: EdgeInsets.only(bottom: 16),
-                child: Text(
-                  'Sắp xếp theo',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                  ),
-                ),
-              ),
-              ListTile(
-                leading: const Icon(Icons.access_time),
-                title: const Text('Mới nhất trước'),
-                onTap: () {
-                  Navigator.pop(context);
-                  setState(() {
-                    _controller.sortByDate(true);
-                  });
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.history),
-                title: const Text('Cũ nhất trước'),
-                onTap: () {
-                  Navigator.pop(context);
-                  setState(() {
-                    _controller.sortByDate(false);
-                  });
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.sort_by_alpha),
-                title: const Text('Theo tiêu đề (A-Z)'),
-                onTap: () {
-                  Navigator.pop(context);
-                  setState(() {
-                    _controller.sortByTitle(true);
-                  });
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.sort_by_alpha),
-                title: const Text('Theo tiêu đề (Z-A)'),
-                onTap: () {
-                  Navigator.pop(context);
-                  setState(() {
-                    _controller.sortByTitle(false);
-                  });
-                },
-              ),
-            ],
+      builder: (_) => AlertDialog(
+        title: const Text('Xác nhận xóa'),
+        content: const Text('Bạn có chắc muốn xóa mục này khỏi yêu thích?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Hủy'),
           ),
-        );
-      },
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              final deletedItem = FavouriteItem(
+                id: item.id,
+                userId: item.userId,
+                title: item.title,
+                description: item.description,
+                imageUrl: item.imageUrl,
+                link: item.link,
+                pubDate: item.pubDate,
+              );
+
+              try {
+                await _controller.deleteFavouriteItem(item);
+                setState(() {});
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: const Text('Đã xóa khỏi yêu thích'),
+                      action: SnackBarAction(
+                        label: 'Hoàn tác',
+                        onPressed: () async {
+                          try {
+                            await _controller.undoDelete(deletedItem);
+                            setState(() {});
+                          } catch (e) {
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Lỗi khi hoàn tác: $e')),
+                              );
+                            }
+                          }
+                        },
+                      ),
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Lỗi khi xóa: $e')),
+                  );
+                }
+              }
+            },
+            child: const Text('Xóa'),
+          ),
+        ],
+      ),
     );
   }
 }
