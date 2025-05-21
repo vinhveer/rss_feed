@@ -1,138 +1,189 @@
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+class FavouriteItem {
+  final int id;
+  final String userId;
+  final String title;
+  final String? description;
+  final String? imageUrl;
+  final String link;
+  final DateTime pubDate;
+
+  FavouriteItem({
+    required this.id,
+    required this.userId,
+    required this.title,
+    this.description,
+    this.imageUrl,
+    required this.link,
+    required this.pubDate,
+  });
+
+  factory FavouriteItem.fromMap(Map<String, dynamic> map) {
+    final article = map['article'] ?? {};
+
+    return FavouriteItem(
+      id: map['article_id'] as int,
+      userId: map['user_id'] as String,
+      title: article['title'] as String? ?? '',
+      description: article['description'] as String?,
+      imageUrl: article['image_url'] as String?,
+      link: article['link'] as String? ?? '',
+      pubDate: DateTime.parse(article['pub_date'] as String),
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'user_id': userId,
+      'article_id': id,
+    };
+  }
+}
+
 class FavouriteController {
-  final List<String> categories = [
-    'Tất cả',
-    'Thể thao',
-    'Giải trí',
-    'Khoa học',
-    'Công nghệ',
-    'Âm nhạc',
-  ];
+  final String userId;
+  final List<FavouriteItem> _favourites = [];
+  final List<FavouriteItem> _selectedItems = [];
+  bool _isLoading = false;
+  bool _isSelectMode = false;
 
-  final List<FavouriteItem> _favourites = [
-    FavouriteItem(
-      id: '1',
-      title: 'Khám phá vùng biển sâu: Những sinh vật kỳ lạ dưới đáy đại dương',
-      description: 'Các nhà khoa học phát hiện nhiều loài sinh vật mới chưa từng được biết đến tại vùng biển sâu.',
-      category: 'Khoa học',
-      imageUrl: 'assets/images/ocean.jpg',
-      savedDate: DateTime.now().subtract(const Duration(days: 2)),
-    ),
-    FavouriteItem(
-      id: '2',
-      title: 'Đội tuyển Việt Nam chuẩn bị cho vòng loại World Cup 2026',
-      description: 'HLV trưởng công bố danh sách 26 cầu thủ cho các trận đấu sắp tới.',
-      category: 'Thể thao',
-      imageUrl: 'assets/images/football_team.jpg',
-      savedDate: DateTime.now().subtract(const Duration(days: 5)),
-    ),
-    FavouriteItem(
-      id: '3',
-      title: 'Top 10 phim đáng chờ đợi nhất năm 2025',
-      description: 'Những bom tấn Hollywood và các tác phẩm điện ảnh độc lập được mong chờ nhất.',
-      category: 'Giải trí',
-      imageUrl: 'assets/images/movies.jpg',
-      savedDate: DateTime.now().subtract(const Duration(days: 1)),
-    ),
-    FavouriteItem(
-      id: '4',
-      title: 'Xu hướng công nghệ AI mới nhất trong năm 2025',
-      description: 'Trí tuệ nhân tạo đang thay đổi cách chúng ta làm việc và sống như thế nào.',
-      category: 'Công nghệ',
-      imageUrl: 'assets/images/ai_tech.jpg',
-      savedDate: DateTime.now().subtract(const Duration(days: 3)),
-    ),
-    FavouriteItem(
-      id: '5',
-      title: 'Festival âm nhạc quốc tế sẽ diễn ra tại Hà Nội vào tháng 6',
-      description: 'Hàng loạt nghệ sĩ hàng đầu thế giới xác nhận tham gia sự kiện âm nhạc lớn nhất năm.',
-      category: 'Âm nhạc',
-      imageUrl: 'assets/images/music_festival.jpg',
-      savedDate: DateTime.now().subtract(const Duration(days: 7)),
-    ),
-  ];
-
-  String selectedFilter = 'Tất cả';
-  bool isSelectMode = false;
+  FavouriteController({required this.userId});
 
   List<FavouriteItem> get favourites => _favourites;
+  List<FavouriteItem> get selectedItems => _selectedItems;
+  bool get isLoading => _isLoading;
+  bool get isSelectMode => _isSelectMode;
 
-  List<FavouriteItem> get filteredFavourites {
-    if (selectedFilter == 'Tất cả') {
-      return _favourites;
-    } else {
-      return _favourites.where((item) => item.category == selectedFilter).toList();
+  final _client = Supabase.instance.client;
+
+  /// Load toàn bộ mục yêu thích theo userId
+  Future<void> loadFavourites() async {
+    _isLoading = true;
+
+    try {
+      final response = await _client
+          .from('favourite_article')
+          .select('user_id, article_id, article(pub_date, title, link, image_url, description)')
+          .eq('user_id', userId)
+          .order('article(pub_date)', ascending: false);
+
+      _favourites.clear();
+      for (final map in response) {
+        _favourites.add(FavouriteItem.fromMap(map));
+      }
+    } catch (e) {
+      // Handle errors appropriately
+      print('Error loading favourites: $e');
+    } finally {
+      _isLoading = false;
     }
   }
 
-  int get selectedCount => _favourites.where((item) => item.isSelected).length;
+  /// Load theo ID cụ thể của bài viết
+  Future<FavouriteItem?> loadFavouriteByArticleId(int articleId) async {
+    _isLoading = true;
 
-  void setFilter(String category) {
-    selectedFilter = category;
+    try {
+      final response = await _client
+          .from('favourite_article')
+          .select('user_id, article_id, article(pub_date, title, link, image_url, description)')
+          .eq('article_id', articleId)
+          .eq('user_id', userId)
+          .maybeSingle();
+
+      _isLoading = false;
+
+      if (response != null) {
+        return FavouriteItem.fromMap(response);
+      }
+      return null;
+    } catch (e) {
+      _isLoading = false;
+      print('Error loading favourite by article ID: $e');
+      return null;
+    }
   }
 
+  /// Xóa 1 mục
+  Future<void> deleteFavouriteItem(FavouriteItem item) async {
+    try {
+      await _client
+          .from('favourite_article')
+          .delete()
+          .eq('article_id', item.id)
+          .eq('user_id', userId);
+
+      _favourites.removeWhere((f) => f.id == item.id);
+    } catch (e) {
+      print('Error deleting favourite item: $e');
+      // Re-throw or handle as needed
+      rethrow;
+    }
+  }
+
+  /// Hoàn tác xóa
+  Future<void> undoDelete(FavouriteItem item) async {
+    try {
+      await _client
+          .from('favourite_article')
+          .insert(item.toMap());
+
+      // Reload the item to get the full data with article details
+      final insertedItem = await loadFavouriteByArticleId(item.id);
+
+      if (insertedItem != null && !_favourites.any((f) => f.id == item.id)) {
+        _favourites.insert(0, insertedItem);
+      }
+    } catch (e) {
+      print('Error undoing delete: $e');
+      // Re-throw or handle as needed
+      rethrow;
+    }
+  }
+
+  /// Chế độ chọn
   void toggleItemSelection(FavouriteItem item) {
-    if (!isSelectMode) {
-      isSelectMode = true;
-      item.isSelected = true;
+    final index = _selectedItems.indexWhere((i) => i.id == item.id);
+    if (index >= 0) {
+      _selectedItems.removeAt(index);
     } else {
-      item.isSelected = !item.isSelected;
-      if (selectedCount == 0) isSelectMode = false;
+      _selectedItems.add(item);
     }
   }
 
   void enableSelectMode() {
-    isSelectMode = true;
+    _isSelectMode = true;
+    _selectedItems.clear();
   }
 
   void cancelSelection() {
-    for (var item in _favourites) {
-      item.isSelected = false;
-    }
-    isSelectMode = false;
+    _isSelectMode = false;
+    _selectedItems.clear();
   }
 
-  void deleteSelected() {
-    _favourites.removeWhere((item) => item.isSelected);
-    isSelectMode = false;
-  }
+  /// Xóa nhiều mục đã chọn
+  Future<void> deleteSelected() async {
+    if (_selectedItems.isEmpty) return;
 
-  void deleteFavouriteItem(FavouriteItem item) {
-    _favourites.removeWhere((favItem) => favItem.id == item.id);
-  }
+    try {
+      final ids = _selectedItems.map((e) => e.id).toList();
+      await _client
+          .from('favourite_article')
+          .delete()
+          .inFilter('article_id', ids)
+          .eq('user_id', userId);
 
-  void sortByDate(bool newestFirst) {
-    if (newestFirst) {
-      _favourites.sort((a, b) => b.savedDate.compareTo(a.savedDate));
-    } else {
-      _favourites.sort((a, b) => a.savedDate.compareTo(b.savedDate));
-    }
-  }
-
-  void sortByTitle(bool ascending) {
-    if (ascending) {
-      _favourites.sort((a, b) => a.title.compareTo(b.title));
-    } else {
-      _favourites.sort((a, b) => b.title.compareTo(a.title));
+      _favourites.removeWhere((f) => ids.contains(f.id));
+      cancelSelection();
+    } catch (e) {
+      print('Error deleting selected items: $e');
+      // Re-throw or handle as needed
+      rethrow;
     }
   }
-}
 
-class FavouriteItem {
-  final String id;
-  final String title;
-  final String description;
-  final String category;
-  final String imageUrl;
-  final DateTime savedDate;
-  bool isSelected;
-
-  FavouriteItem({
-    required this.id,
-    required this.title,
-    required this.description,
-    required this.category,
-    required this.imageUrl,
-    required this.savedDate,
-    this.isSelected = false,
-  });
+  bool isSelected(FavouriteItem item) {
+    return _selectedItems.any((i) => i.id == item.id);
+  }
 }

@@ -30,7 +30,7 @@ class AppController extends GetxController {
   final List<PageInfo> _pages = [
     PageInfo(page: PageHome(), id: 'page_home'),
     PageInfo(page: PageExplore(), id: 'page_explore'),
-    PageInfo(page: PageFavourite(), id: 'page_favourite'),
+    PageInfo(page: PageFavourite(userId: '58c42dfd-2dc9-4a73-bb5f-50c60ddeae7a',), id: 'page_favourite'),
     PageInfo(page: PageSettings(), id: 'page_settings'),
   ];
 
