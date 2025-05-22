@@ -1,6 +1,6 @@
 import 'package:get/get.dart';
 import 'package:flutter_tts/flutter_tts.dart';
-import '../repository/article_content_repository.dart';
+import '../repository/extract_content_repository.dart';
 
 class ReadingController extends GetxController {
   final ArticleContentRepository _repository = ArticleContentRepository();
@@ -11,18 +11,25 @@ class ReadingController extends GetxController {
 
   // Rx variables for UI binding
   final RxBool isReading = false.obs;
+  final RxBool isPlaying = false.obs; // Thêm để phân biệt pause/play
   final RxBool isCompleted = false.obs;
   final RxInt currentIndex = 0.obs;
-  final RxDouble speechRate = 0.5.obs;
+  final RxDouble speechRate = 1.0.obs; // Đổi default thành 1.0
 
   List<String> _sentences = [];
   String _currentCleanedText = '';
   String? _currentUrl;
+  bool _isPaused = false; // Track pause state
 
   @override
   void onInit() {
     super.onInit();
-    _flutterTts.setStartHandler(() => isReading.value = true);
+    _flutterTts.setStartHandler(() {
+      isReading.value = true;
+      isPlaying.value = true;
+      _isPaused = false;
+    });
+
     _flutterTts.setCompletionHandler(() async {
       if (currentIndex.value < _sentences.length - 1) {
         currentIndex.value++;
@@ -30,10 +37,26 @@ class ReadingController extends GetxController {
       } else {
         isCompleted.value = true;
         isReading.value = false;
+        isPlaying.value = false;
+        _isPaused = false;
       }
     });
+
     _flutterTts.setCancelHandler(() {
-      isReading.value = false;
+      isPlaying.value = false;
+      if (!_isPaused) {
+        isReading.value = false;
+      }
+    });
+
+    _flutterTts.setPauseHandler(() {
+      isPlaying.value = false;
+      _isPaused = true;
+    });
+
+    _flutterTts.setContinueHandler(() {
+      isPlaying.value = true;
+      _isPaused = false;
     });
   }
 
@@ -50,7 +73,7 @@ class ReadingController extends GetxController {
   /// Xoá ảnh (Markdown hoặc link ảnh trực tiếp)
   String _removeImages(String input) {
     String cleaned = input.replaceAll(RegExp(r'!\[.*?\]\(.*?\)'), '');
-    cleaned = cleaned.replaceAll(RegExp(r'http\\S+\\.(jpg|jpeg|png|gif)'), '');
+    cleaned = cleaned.replaceAll(RegExp(r'https?://\S+\.(jpg|jpeg|png|gif|webp)', caseSensitive: false), '');
     return cleaned;
   }
 
@@ -72,83 +95,110 @@ class ReadingController extends GetxController {
 
   /// Tách văn bản thành các câu
   List<String> _splitSentences(String text) {
-    final regex = RegExp(r'[^.!?]+[.!?]');
+    // Cải thiện regex để tách câu tốt hơn
+    final regex = RegExp(r'[^.!?]*[.!?]+(?=\s|$)');
     final matches = regex.allMatches(text);
-    return matches.map((m) => m.group(0)!.trim()).where((s) => s.isNotEmpty).toList();
+    List<String> sentences = matches
+        .map((m) => m.group(0)!.trim())
+        .where((s) => s.isNotEmpty && s.length > 3)
+        .toList();
+
+    // Nếu không tách được câu, chia theo dấu xuống dòng
+    if (sentences.isEmpty) {
+      sentences = text.split('\n')
+          .map((s) => s.trim())
+          .where((s) => s.isNotEmpty && s.length > 3)
+          .toList();
+    }
+
+    return sentences;
   }
 
   /// Đọc bài báo từ URL
-  Future<void> readArticle(String articleUrl,  {required bool isVn}) async {
-    isCompleted.value = false;
-    isReading.value = false;
-    _currentUrl = articleUrl;
+  Future<void> readArticle(String articleUrl, {required bool isVn}) async {
+    try {
+      isCompleted.value = false;
+      isReading.value = false;
+      isPlaying.value = false;
+      _isPaused = false;
+      _currentUrl = articleUrl;
 
-    final content = await _repository.fetchArticleContent(articleUrl);
-    if (content == null) return;
+      final content = await _repository.fetchArticleContent(articleUrl);
+      if (content == null) return;
 
-    final String title = content['title'] ?? '';
-    final String text = content['text'] ?? '';
-    final String author = content['author'] ?? '';
-    final String pubDate = content['pubDate'] ?? '';
+      final String title = content['title'] ?? '';
+      final String text = content['text'] ?? '';
+      final String pubDate = content['pubDate'] ?? '';
 
-    final String dateFormatted = pubDate.isNotEmpty
-        ? _formatVietnameseDate(pubDate)
-        : 'Không rõ';
+      final String dateFormatted = pubDate.isNotEmpty
+          ? _formatVietnameseDate(pubDate)
+          : 'Không rõ';
 
-    final String fullText = '''
-$title.
-Tác giả: ${author.isNotEmpty ? author : "Không rõ"}.
-Ngày đăng: $dateFormatted.
-$text
-''';
+      final String fullText = '''
+        $title.
+        Ngày đăng: $dateFormatted.
+        $text
+        ''';
 
-    String cleaned = _removeImages(fullText);
-    cleaned = _removeMarkdownLinks(cleaned);
-    cleaned = _cleanText(cleaned);
+      String cleaned = _removeImages(fullText);
+      cleaned = _removeMarkdownLinks(cleaned);
+      cleaned = _cleanText(cleaned);
 
-    _currentCleanedText = cleaned;
-    _sentences = _splitSentences(cleaned);
-    currentIndex.value = 0;
+      _currentCleanedText = cleaned;
+      _sentences = _splitSentences(cleaned);
+      currentIndex.value = 0;
 
+      await _setupTTS(isVn);
+      await _speakCurrent();
+    } catch (e) {
+      print('Error reading article: $e');
+      isReading.value = false;
+      isPlaying.value = false;
+    }
+  }
+
+  Future<void> _setupTTS(bool isVn) async {
     await _flutterTts.setLanguage(isVn ? "vi-VN" : "en-US");
     await _flutterTts.setSpeechRate(speechRate.value);
     await _flutterTts.setVolume(1.0);
     await _flutterTts.setPitch(1.0);
-
-    await _speakCurrent();
   }
 
   Future<void> _speakCurrent() async {
     if (currentIndex.value >= 0 && currentIndex.value < _sentences.length) {
       await _flutterTts.speak(_sentences[currentIndex.value]);
-      isReading.value = true;
     }
   }
 
-  /// Tiếp câu tiếp theo
+  /// Tiến 10 giây (hoặc câu tiếp theo)
   Future<void> skipForward() async {
     if (currentIndex.value < _sentences.length - 1) {
       currentIndex.value++;
       await _flutterTts.stop();
-      await _speakCurrent();
+      if (isReading.value) {
+        await _speakCurrent();
+      }
     }
   }
 
-  /// Quay lại câu trước
+  /// Lùi 10 giây (hoặc câu trước)
   Future<void> skipBackward() async {
     if (currentIndex.value > 0) {
       currentIndex.value--;
       await _flutterTts.stop();
-      await _speakCurrent();
+      if (isReading.value) {
+        await _speakCurrent();
+      }
     }
   }
 
-  /// Đặt tốc độ đọc (0.0-1.0)
+  /// Đặt tốc độ đọc (0.5-2.0)
   Future<void> setSpeechRate(double rate) async {
-    speechRate.value = rate.clamp(0.0, 1.0);
+    speechRate.value = rate.clamp(0.5, 2.0);
     await _flutterTts.setSpeechRate(speechRate.value);
-    // Nếu đang đọc, đọc lại câu hiện tại với tốc độ mới
-    if (_sentences.isNotEmpty &&
+
+    // Nếu đang đọc, áp dụng tốc độ mới ngay lập tức
+    if (isPlaying.value && _sentences.isNotEmpty &&
         currentIndex.value >= 0 &&
         currentIndex.value < _sentences.length) {
       await _flutterTts.stop();
@@ -156,12 +206,16 @@ $text
     }
   }
 
-  /// Tạm dừng hoặc phát lại
+  /// Tạm dừng hoặc tiếp tục đọc
   Future<void> toggleReading() async {
-    if (isReading.value) {
+    if (isPlaying.value) {
+      // Đang phát -> tạm dừng
       await _flutterTts.pause();
-      isReading.value = false;
+    } else if (_isPaused) {
+      // Đang tạm dừng -> tiếp tục
+      await _flutterTts.speak(_sentences[currentIndex.value]);
     } else {
+      // Chưa bắt đầu hoặc đã dừng -> bắt đầu đọc
       await _speakCurrent();
     }
   }
@@ -170,5 +224,14 @@ $text
   Future<void> stop() async {
     await _flutterTts.stop();
     isReading.value = false;
+    isPlaying.value = false;
+    _isPaused = false;
+    currentIndex.value = 0;
+  }
+
+  @override
+  void onClose() {
+    _flutterTts.stop();
+    super.onClose();
   }
 }

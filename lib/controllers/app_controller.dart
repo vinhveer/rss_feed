@@ -15,7 +15,6 @@ import 'package:rss_feed/pages/page_read.dart';
 import 'package:rss_feed/pages/settings_pages/page_settings.dart';
 import 'package:rss_feed/pages/settings_pages/color_scheme_settings_page.dart';
 import 'package:rss_feed/pages/settings_pages/theme_mode_setting_page.dart';
-import 'package:rss_feed/pages/test_pages/test_pages_home.dart';
 
 class AppController extends GetxController {
   // Trang hiện tại và trạng thái cuộn
@@ -51,7 +50,6 @@ class AppController extends GetxController {
   void goToChangePassword() => Get.to(() => PageChangePassword());
   void goToForgetPassword() => Get.to(() => PageForgetPass());
   void goToSignUp() => Get.to(() => PageSignUp());
-  void goToPageTest() => Get.to(() => TestPagesHome());
 
   // Cập nhật trạng thái cuộn
   void updateScrollStatus(double offset) => _isScrolled.value = offset > 0;

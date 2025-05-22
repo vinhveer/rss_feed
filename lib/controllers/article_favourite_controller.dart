@@ -1,68 +1,65 @@
 import 'package:get/get.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:rss_feed/repository/article_favourite_repository.dart';
 
-class ArticleFavouriteController {
-  final SupabaseClient _supabase = Supabase.instance.client;
+class ArticleFavouriteController extends GetxController {
+  final ArticleFavouriteRepository _repository = ArticleFavouriteRepository();
 
   final RxSet<int> _ignoredArticleIds = <int>{}.obs;
 
   /// Thêm bài viết yêu thích cho user hiện tại
   Future<void> addToFavourite(int articleId) async {
-    final user = _supabase.auth.currentUser;
-
-    if (user == null) {
-      return;
-    }
-
-    final userId = user.id;
-
     try {
-      await _supabase.from('favourite_article').insert({
-        'article_id': articleId,
-        'user_id': userId,
-      });
+      await _repository.addFavourite(articleId);
+      // Có thể emit success event hoặc update UI state
     } catch (e) {
-      return;
+      // Handle error - show snackbar, dialog, etc.
+      Get.snackbar('Error', 'Failed to add to favourite');
+      rethrow;
     }
   }
 
   /// Kiểm tra đã yêu thích chưa
   Future<bool> isFavourited(int articleId) async {
-    final user = _supabase.auth.currentUser;
-    if (user == null) return false;
-
-    final result = await _supabase
-        .from('favourite_article')
-        .select()
-        .eq('article_id', articleId)
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-    return result != null;
-  }
-  /// xóa yêu thich
-  Future<void> removeFromFavourite(int articleId) async {
-    final user = _supabase.auth.currentUser;
-    if (user == null) return;
-
     try {
-      await _supabase
-          .from('favourite_article')
-          .delete()
-          .eq('article_id', articleId)
-          .eq('user_id', user.id);
+      return await _repository.checkFavouriteExists(articleId);
     } catch (e) {
-      return;
+      // Handle error
+      return false;
     }
   }
 
+  /// Xóa yêu thích
+  Future<void> removeFromFavourite(int articleId) async {
+    try {
+      await _repository.removeFavourite(articleId);
+      // Có thể emit success event hoặc update UI state
+    } catch (e) {
+      // Handle error - show snackbar, dialog, etc.
+      Get.snackbar('Error', 'Failed to remove from favourite');
+      rethrow;
+    }
+  }
+
+  /// Thêm bài viết vào danh sách bỏ qua
   void ignoreArticle(int articleId) {
     _ignoredArticleIds.add(articleId);
   }
 
+  /// Kiểm tra bài viết có bị bỏ qua không
   bool isIgnored(int articleId) {
     return _ignoredArticleIds.contains(articleId);
   }
 
+  /// Lấy danh sách ID các bài viết bị bỏ qua
   List<int> get ignoredIds => _ignoredArticleIds.toList();
+
+  /// Xóa bài viết khỏi danh sách bỏ qua
+  void unignoreArticle(int articleId) {
+    _ignoredArticleIds.remove(articleId);
+  }
+
+  /// Xóa tất cả bài viết bỏ qua
+  void clearIgnoredArticles() {
+    _ignoredArticleIds.clear();
+  }
 }

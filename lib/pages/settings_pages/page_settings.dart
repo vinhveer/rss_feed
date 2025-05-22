@@ -52,10 +52,6 @@ class PageSettings extends StatelessWidget {
                               style: const TextStyle(fontSize: 14, color: Colors.grey),
                             ),
                             const SizedBox(height: 4),
-                            // Text(
-                            //   'Vui lòng đăng nhập để đồng bộ dữ liệu',
-                            //   style: TextStyle(fontSize: 14, color: Colors.grey),
-                            // ),
                           ],
                         ),
                       ),
@@ -66,7 +62,6 @@ class PageSettings extends StatelessWidget {
 
               const SizedBox(height: 20),
 
-              // Phần hiển thị
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: Text(
@@ -169,12 +164,6 @@ class PageSettings extends StatelessWidget {
                 ],
               )
                   : Container(),
-              ListTile(
-                leading: const Icon(Icons.logout),
-                title: const Text('Test pages'),
-                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                onTap: () => appController.goToPageTest(),
-              ),
             ],
           ),
         ),

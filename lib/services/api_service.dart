@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -26,6 +27,9 @@ class ApiService {
         bool isAuthenticate = false,
         Map<String, String>? headers,
       }) async {
+
+    Get.log('GET: $_baseUrl$endpoint');
+
     final Uri url = Uri.parse('$_baseUrl$endpoint');
     Map<String, String> requestHeaders = {
       'Content-Type': 'application/json',

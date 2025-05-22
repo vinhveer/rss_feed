@@ -82,30 +82,11 @@ class AuthService {
     }
   }
 
-  /// Đăng nhập với Google OAuth và merge dữ liệu sau khi hoàn tất
-  Future<void> signInWithGoogle() async {
-    final anonToken = _supabase.auth.currentSession?.accessToken;
-    try {
-      await _supabase.auth.signInWithOAuth(OAuthProvider.google);
-      _supabase.auth.onAuthStateChange.listen((data) async {
-        if (data.event == AuthChangeEvent.signedIn) {
-          await _mergeAnonymousData(anonToken, data.session?.accessToken);
-        }
-      });
-    } catch (e) {
-      rethrow;
-    }
-  }
-
   Future<void> _mergeAnonymousData(String? anonToken, String? userToken) async {
     if (anonToken == null || userToken == null) {
       return;
     }
     try {
-      final res = await _supabase.functions.invoke(
-        'merge-anon',
-        body: {'anonToken': anonToken, 'userToken': userToken},
-      );
     } on FunctionException catch (e) {
       throw AuthException('Merge failed: ${e.reasonPhrase}');
     }

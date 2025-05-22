@@ -86,18 +86,6 @@ class AuthController extends GetxController {
     }
   }
 
-  /// Sign in with Google (OAuth)
-  Future<void> signInWithGoogle() async {
-    isLoading.value = true;
-    try {
-      await _authService.signInWithGoogle();
-    } catch (e) {
-      rethrow;
-    } finally {
-      isLoading.value = false;
-    }
-  }
-
   /// Sign out and re-create anonymous session
   Future<void> signOut() async {
     isLoading.value = true;

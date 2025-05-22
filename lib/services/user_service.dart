@@ -1,11 +1,10 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'supabase_service.dart';
 
 class UserService {
   UserService._();
   static final UserService instance = UserService._();
 
-  final SupabaseClient _supabase = SupabaseService.instance.client;
+  final SupabaseClient _supabase = Supabase.instance.client;
 
   Future<Map<String, dynamic>?> getMyProfile() async {
     final userId = _supabase.auth.currentUser?.id;

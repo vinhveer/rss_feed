@@ -5,7 +5,7 @@ class ShareController extends GetxController {
   void shareItem(String title) {
     SharePlus.instance.share(
       ShareParams(
-        text: 'Tin tức thú vị hôm nay! $title',
+        text: 'Bài viết: $title',
       ),
     );
   }

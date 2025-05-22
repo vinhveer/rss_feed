@@ -1,189 +1,108 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:get/get.dart';
+import 'package:rss_feed/row_row_row/tables/favourite_article.row.dart';
+import 'package:rss_feed/repository/favourite_repository.dart';
 
-class FavouriteItem {
-  final int id;
-  final String userId;
-  final String title;
-  final String? description;
-  final String? imageUrl;
-  final String link;
-  final DateTime pubDate;
+class FavouriteController extends GetxController {
+  final FavouriteRepository _repository;
 
-  FavouriteItem({
-    required this.id,
-    required this.userId,
-    required this.title,
-    this.description,
-    this.imageUrl,
-    required this.link,
-    required this.pubDate,
-  });
+  final RxList<FavouriteArticleRow> favourites = <FavouriteArticleRow>[].obs;
+  final RxList<FavouriteArticleRow> selectedItems = <FavouriteArticleRow>[].obs;
+  final RxBool isLoading = false.obs;
+  final RxBool isSelectMode = false.obs;
 
-  factory FavouriteItem.fromMap(Map<String, dynamic> map) {
-    final article = map['article'] ?? {};
+  FavouriteController({
+    FavouriteRepository? repository,
+  }) : _repository = repository ?? FavouriteRepository();
 
-    return FavouriteItem(
-      id: map['article_id'] as int,
-      userId: map['user_id'] as String,
-      title: article['title'] as String? ?? '',
-      description: article['description'] as String?,
-      imageUrl: article['image_url'] as String?,
-      link: article['link'] as String? ?? '',
-      pubDate: DateTime.parse(article['pub_date'] as String),
-    );
-  }
-
-  Map<String, dynamic> toMap() {
-    return {
-      'user_id': userId,
-      'article_id': id,
-    };
-  }
-}
-
-class FavouriteController {
-  final String userId;
-  final List<FavouriteItem> _favourites = [];
-  final List<FavouriteItem> _selectedItems = [];
-  bool _isLoading = false;
-  bool _isSelectMode = false;
-
-  FavouriteController({required this.userId});
-
-  List<FavouriteItem> get favourites => _favourites;
-  List<FavouriteItem> get selectedItems => _selectedItems;
-  bool get isLoading => _isLoading;
-  bool get isSelectMode => _isSelectMode;
-
-  final _client = Supabase.instance.client;
-
-  /// Load toàn bộ mục yêu thích theo userId
+  /// Load all favorites
   Future<void> loadFavourites() async {
-    _isLoading = true;
-
+    isLoading.value = true;
     try {
-      final response = await _client
-          .from('favourite_article')
-          .select('user_id, article_id, article(pub_date, title, link, image_url, description)')
-          .eq('user_id', userId)
-          .order('article(pub_date)', ascending: false);
-
-      _favourites.clear();
-      for (final map in response) {
-        _favourites.add(FavouriteItem.fromMap(map));
-      }
+      final response = await _repository.loadFavourites();
+      favourites.assignAll(response);
     } catch (e) {
-      // Handle errors appropriately
       print('Error loading favourites: $e');
+      rethrow;
     } finally {
-      _isLoading = false;
+      isLoading.value = false;
     }
   }
 
-  /// Load theo ID cụ thể của bài viết
-  Future<FavouriteItem?> loadFavouriteByArticleId(int articleId) async {
-    _isLoading = true;
-
+  /// Load a specific favorite by article ID
+  Future<FavouriteArticleRow?> loadFavouriteByArticleId(int articleId) async {
+    isLoading.value = true;
     try {
-      final response = await _client
-          .from('favourite_article')
-          .select('user_id, article_id, article(pub_date, title, link, image_url, description)')
-          .eq('article_id', articleId)
-          .eq('user_id', userId)
-          .maybeSingle();
-
-      _isLoading = false;
-
-      if (response != null) {
-        return FavouriteItem.fromMap(response);
-      }
-      return null;
+      final response = await _repository.loadFavouriteByArticleId(articleId);
+      return response;
     } catch (e) {
-      _isLoading = false;
       print('Error loading favourite by article ID: $e');
       return null;
+    } finally {
+      isLoading.value = false;
     }
   }
 
-  /// Xóa 1 mục
-  Future<void> deleteFavouriteItem(FavouriteItem item) async {
+  /// Delete a favorite item
+  Future<void> deleteFavouriteItem(FavouriteArticleRow item) async {
     try {
-      await _client
-          .from('favourite_article')
-          .delete()
-          .eq('article_id', item.id)
-          .eq('user_id', userId);
-
-      _favourites.removeWhere((f) => f.id == item.id);
+      await _repository.deleteFavouriteItem(item.articleId);
+      favourites.removeWhere((f) => f.articleId == item.articleId);
     } catch (e) {
-      print('Error deleting favourite item: $e');
-      // Re-throw or handle as needed
       rethrow;
     }
   }
 
-  /// Hoàn tác xóa
-  Future<void> undoDelete(FavouriteItem item) async {
+  /// Undo a delete operation
+  Future<void> undoDelete(FavouriteArticleRow item) async {
     try {
-      await _client
-          .from('favourite_article')
-          .insert(item.toMap());
-
-      // Reload the item to get the full data with article details
-      final insertedItem = await loadFavouriteByArticleId(item.id);
-
-      if (insertedItem != null && !_favourites.any((f) => f.id == item.id)) {
-        _favourites.insert(0, insertedItem);
+      await _repository.createFavouriteItem(item.articleId);
+      // Reload the item to get the full data (if needed)
+      final insertedItem = await loadFavouriteByArticleId(item.articleId);
+      if (insertedItem != null && !favourites.any((f) => f.articleId == item.articleId)) {
+        favourites.insert(0, insertedItem);
       }
     } catch (e) {
-      print('Error undoing delete: $e');
-      // Re-throw or handle as needed
       rethrow;
     }
   }
 
-  /// Chế độ chọn
-  void toggleItemSelection(FavouriteItem item) {
-    final index = _selectedItems.indexWhere((i) => i.id == item.id);
+  /// Toggle selection state for an item
+  void toggleItemSelection(FavouriteArticleRow item) {
+    final index = selectedItems.indexWhere((i) => i.articleId == item.articleId);
     if (index >= 0) {
-      _selectedItems.removeAt(index);
+      selectedItems.removeAt(index);
     } else {
-      _selectedItems.add(item);
+      selectedItems.add(item);
     }
   }
 
+  /// Enable selection mode
   void enableSelectMode() {
-    _isSelectMode = true;
-    _selectedItems.clear();
+    isSelectMode.value = true;
+    selectedItems.clear();
   }
 
+  /// Cancel selection mode
   void cancelSelection() {
-    _isSelectMode = false;
-    _selectedItems.clear();
+    isSelectMode.value = false;
+    selectedItems.clear();
   }
 
-  /// Xóa nhiều mục đã chọn
+  /// Delete selected items
   Future<void> deleteSelected() async {
-    if (_selectedItems.isEmpty) return;
-
+    if (selectedItems.isEmpty) return;
     try {
-      final ids = _selectedItems.map((e) => e.id).toList();
-      await _client
-          .from('favourite_article')
-          .delete()
-          .inFilter('article_id', ids)
-          .eq('user_id', userId);
-
-      _favourites.removeWhere((f) => ids.contains(f.id));
+      final ids = selectedItems.map((e) => e.articleId).toList();
+      await _repository.deleteMultipleFavourites(ids);
+      favourites.removeWhere((f) => ids.contains(f.articleId));
       cancelSelection();
     } catch (e) {
-      print('Error deleting selected items: $e');
-      // Re-throw or handle as needed
       rethrow;
     }
   }
 
-  bool isSelected(FavouriteItem item) {
-    return _selectedItems.any((i) => i.id == item.id);
+  /// Check if an item is selected
+  bool isSelected(FavouriteArticleRow item) {
+    return selectedItems.any((i) => i.articleId == item.articleId);
   }
 }
