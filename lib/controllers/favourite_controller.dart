@@ -1,12 +1,12 @@
 import 'package:get/get.dart';
-import 'package:rss_feed/row_row_row/tables/favourite_article.row.dart';
+import 'package:rss_feed/models/favourite_item.dart';
 import 'package:rss_feed/repository/favourite_repository.dart';
 
 class FavouriteController extends GetxController {
   final FavouriteRepository _repository;
 
-  final RxList<FavouriteArticleRow> favourites = <FavouriteArticleRow>[].obs;
-  final RxList<FavouriteArticleRow> selectedItems = <FavouriteArticleRow>[].obs;
+  final RxList<FavouriteItem> favourites = <FavouriteItem>[].obs;
+  final RxList<FavouriteItem> selectedItems = <FavouriteItem>[].obs;
   final RxBool isLoading = false.obs;
   final RxBool isSelectMode = false.obs;
 
@@ -29,7 +29,7 @@ class FavouriteController extends GetxController {
   }
 
   /// Load a specific favorite by article ID
-  Future<FavouriteArticleRow?> loadFavouriteByArticleId(int articleId) async {
+  Future<FavouriteItem?> loadFavouriteByArticleId(int articleId) async {
     isLoading.value = true;
     try {
       final response = await _repository.loadFavouriteByArticleId(articleId);
@@ -43,22 +43,22 @@ class FavouriteController extends GetxController {
   }
 
   /// Delete a favorite item
-  Future<void> deleteFavouriteItem(FavouriteArticleRow item) async {
+  Future<void> deleteFavouriteItem(FavouriteItem item) async {
     try {
-      await _repository.deleteFavouriteItem(item.articleId);
-      favourites.removeWhere((f) => f.articleId == item.articleId);
+      await _repository.deleteFavouriteItem(item.id);
+      favourites.removeWhere((f) => f.id == item.id);
     } catch (e) {
       rethrow;
     }
   }
 
   /// Undo a delete operation
-  Future<void> undoDelete(FavouriteArticleRow item) async {
+  Future<void> undoDelete(FavouriteItem item) async {
     try {
-      await _repository.createFavouriteItem(item.articleId);
+      await _repository.createFavouriteItem(item.id);
       // Reload the item to get the full data (if needed)
-      final insertedItem = await loadFavouriteByArticleId(item.articleId);
-      if (insertedItem != null && !favourites.any((f) => f.articleId == item.articleId)) {
+      final insertedItem = await loadFavouriteByArticleId(item.id);
+      if (insertedItem != null && !favourites.any((f) => f.id == item.id)) {
         favourites.insert(0, insertedItem);
       }
     } catch (e) {
@@ -67,8 +67,8 @@ class FavouriteController extends GetxController {
   }
 
   /// Toggle selection state for an item
-  void toggleItemSelection(FavouriteArticleRow item) {
-    final index = selectedItems.indexWhere((i) => i.articleId == item.articleId);
+  void toggleItemSelection(FavouriteItem item) {
+    final index = selectedItems.indexWhere((i) => i.id == item.id);
     if (index >= 0) {
       selectedItems.removeAt(index);
     } else {
@@ -92,9 +92,9 @@ class FavouriteController extends GetxController {
   Future<void> deleteSelected() async {
     if (selectedItems.isEmpty) return;
     try {
-      final ids = selectedItems.map((e) => e.articleId).toList();
+      final ids = selectedItems.map((e) => e.id).toList();
       await _repository.deleteMultipleFavourites(ids);
-      favourites.removeWhere((f) => ids.contains(f.articleId));
+      favourites.removeWhere((f) => ids.contains(f.id));
       cancelSelection();
     } catch (e) {
       rethrow;
@@ -102,7 +102,7 @@ class FavouriteController extends GetxController {
   }
 
   /// Check if an item is selected
-  bool isSelected(FavouriteArticleRow item) {
-    return selectedItems.any((i) => i.articleId == item.articleId);
+  bool isSelected(FavouriteItem item) {
+    return selectedItems.any((i) => i.id == item.id);
   }
 }

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:rss_feed/controllers/feed_controller.dart';
+import 'package:get/get.dart';
+import '../../controllers/feed_controller.dart';
+import '../../controllers/article_favourite_controller.dart';
 import '../../components/category_selection_bar.dart';
 import '../../components/feed_list.dart';
 
@@ -18,6 +20,10 @@ class _PageHomeState extends State<PageHome> {
   void initState() {
     super.initState();
     _loadFeed();
+    // Ensure ArticleFavouriteController is initialized
+    if (!Get.isRegistered<ArticleFavouriteController>()) {
+      Get.put(ArticleFavouriteController());
+    }
   }
 
   Future<void> _loadFeed() async {

@@ -1,4 +1,4 @@
-import 'package:rss_feed/row_row_row/tables/favourite_article.row.dart';
+import 'package:rss_feed/models/favourite_item.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class FavouriteRepository {
@@ -6,7 +6,7 @@ class FavouriteRepository {
   static const _tableName = 'favourite_article';
 
   /// Load all favorites for the current user
-  Future<List<FavouriteArticleRow>> loadFavourites() async {
+  Future<List<FavouriteItem>> loadFavourites() async {
     try {
       // Get current user's ID from the client
       final userId = _client.auth.currentUser?.id;
@@ -16,11 +16,11 @@ class FavouriteRepository {
 
       final response = await _client
           .from(_tableName)
-          .select('user_id, article_id, article(pub_date, title, link, image_url, description)')
+          .select('article_id, user_id, article(pub_date, title, link, image_url, description)')
           .eq('user_id', userId)
           .order('article(pub_date)', ascending: false);
 
-      return response.map<FavouriteArticleRow>((map) => FavouriteArticleRow.fromJson(map)).toList();
+      return response.map<FavouriteItem>((map) => FavouriteItem.fromMap(map)).toList();
     } catch (e) {
       print('Error loading favourites: $e');
       rethrow;
@@ -28,7 +28,7 @@ class FavouriteRepository {
   }
 
   /// Load a specific favorite by articleId for the current user
-  Future<FavouriteArticleRow?> loadFavouriteByArticleId(int articleId) async {
+  Future<FavouriteItem?> loadFavouriteByArticleId(int articleId) async {
     try {
       // Get current user's ID from the client
       final userId = _client.auth.currentUser?.id;
@@ -38,13 +38,13 @@ class FavouriteRepository {
 
       final response = await _client
           .from(_tableName)
-          .select('user_id, article_id, article(pub_date, title, link, image_url, description)')
+          .select('article_id, user_id, article(pub_date, title, link, image_url, description)')
           .eq('article_id', articleId)
           .eq('user_id', userId)
           .maybeSingle();
 
       if (response != null) {
-        return FavouriteArticleRow.fromJson(response);
+        return FavouriteItem.fromMap(response);
       }
       return null;
     } catch (e) {
@@ -82,14 +82,17 @@ class FavouriteRepository {
         throw Exception('User not authenticated');
       }
 
-      final item = FavouriteArticleRow(
+      final item = FavouriteItem(
+        id: articleId,
         userId: userId,
-        articleId: articleId,
+        title: '', // These will be populated from the article table
+        link: '',
+        pubDate: DateTime.now(),
       );
 
       await _client
           .from(_tableName)
-          .insert(item.toJson());
+          .insert(item.toMap());
     } catch (e) {
       print('Error creating/restoring favourite item: $e');
       rethrow;
