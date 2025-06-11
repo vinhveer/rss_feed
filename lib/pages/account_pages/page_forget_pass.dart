@@ -25,7 +25,6 @@ class _PageForgotPasswordState extends State<PageForgetPass> {
 
   @override
   Widget build(BuildContext context) {
-    final primary = colorController.currentSwatch;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Quên mật khẩu', style: TextStyle(fontWeight: FontWeight.w600)),

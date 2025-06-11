@@ -1,11 +1,8 @@
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
-import 'package:rss_feed/pages/account_pages/page_account_info.dart';
-import 'package:rss_feed/pages/account_pages/page_backup_restore.dart';
 import 'package:rss_feed/pages/account_pages/page_change_password.dart';
 import 'package:rss_feed/pages/account_pages/page_forget_pass.dart';
 import 'package:rss_feed/pages/account_pages/page_sign_up.dart';
-
 import 'package:rss_feed/pages/settings_pages/page_choose_topic.dart';
 import 'package:rss_feed/pages/explore_pages/page_explore.dart';
 import 'package:rss_feed/pages/page_favourite.dart';
@@ -45,8 +42,6 @@ class AppController extends GetxController {
   void goToColorSchemeSettingsPage() => Get.to(() => ColorSchemeSettingsPage());
   void goToThemeModeSettingPage() => Get.to(() => ThemeModeSettingPage());
   void goToLoginPage() => Get.to(() => PageLogin());
-  void goToBackupAndRestore() => Get.to(() => PageBackupRestore());
-  void goToAccountInfo() => Get.to(() => PageAccountInfo());
   void goToChangePassword() => Get.to(() => PageChangePassword());
   void goToForgetPassword() => Get.to(() => PageForgetPass());
   void goToSignUp() => Get.to(() => PageSignUp());

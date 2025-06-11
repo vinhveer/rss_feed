@@ -32,7 +32,6 @@ class _PageResetPasswordState extends State<PageResetPassword> {
 
   @override
   Widget build(BuildContext context) {
-    final primary = colorController.currentSwatch;
     return Scaffold(
       appBar: AppBar(
         title: const Text(

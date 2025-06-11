@@ -35,7 +35,6 @@ class _PageChangePasswordState extends State<PageChangePassword> {
 
   @override
   Widget build(BuildContext context) {
-    final primary = colorController.currentSwatch;
     return Scaffold(
       appBar: AppBar(
         title: const Text(
