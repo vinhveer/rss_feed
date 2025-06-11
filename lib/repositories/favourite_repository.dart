@@ -1,28 +1,81 @@
-import 'package:rss_feed/models/favourite_item.dart';
+import 'package:rss_feed/types/favourite_item.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class FavouriteRepository {
   final _client = Supabase.instance.client;
   static const _tableName = 'favourite_article';
 
-  /// Load all favorites for the current user
-  Future<List<FavouriteItem>> loadFavourites() async {
+  /// Load favorites with pagination, sorting and search
+  /// [offset] - Starting position (for pagination)
+  /// [limit] - Number of items to load
+  /// [searchQuery] - Optional search term to filter by title
+  /// [sortBy] - Field to sort by ('pub_date' or 'title')
+  /// [sortAscending] - Sort direction
+  Future<List<FavouriteItem>> loadFavourites({
+    int offset = 0,
+    int limit = 20,
+    String? searchQuery,
+    String sortBy = 'pub_date',
+    bool sortAscending = false,
+  }) async {
     try {
-      // Get current user's ID from the client
       final userId = _client.auth.currentUser?.id;
       if (userId == null) {
         throw Exception('User not authenticated');
       }
 
-      final response = await _client
-          .from(_tableName)
-          .select('article_id, user_id, article(pub_date, title, link, image_url, description)')
-          .eq('user_id', userId)
-          .order('article(pub_date)', ascending: false);
+      // Query từ bảng article và JOIN với favourite_article
+      var query = _client
+          .from('article')
+          .select('''
+            article_id,
+            title,
+            pub_date,
+            link,
+            image_url,
+            description,
+            favourite_article!inner(user_id)
+          ''')
+          .eq('favourite_article.user_id', userId);
 
-      return response.map<FavouriteItem>((map) => FavouriteItem.fromMap(map)).toList();
+      // Apply search if query provided
+      if (searchQuery != null && searchQuery.isNotEmpty) {
+        query = query.ilike('title', '%$searchQuery%');
+      }
+
+      // Apply sorting and pagination
+      final response = await query
+          .order(sortBy, ascending: sortAscending)
+          .range(offset, offset + limit - 1);
+
+      return response.map<FavouriteItem>((map) => FavouriteItem.fromMapDirect(map, userId)).toList();
     } catch (e) {
       print('Error loading favourites: $e');
+      rethrow;
+    }
+  }
+
+  /// Get total count of favorites for current user
+  Future<int> getFavouritesCount({String? searchQuery}) async {
+    try {
+      final userId = _client.auth.currentUser?.id;
+      if (userId == null) {
+        throw Exception('User not authenticated');
+      }
+
+      var query = _client
+          .from('article')
+          .select('article_id, title, favourite_article!inner(user_id)')
+          .eq('favourite_article.user_id', userId);
+
+      if (searchQuery != null && searchQuery.isNotEmpty) {
+        query = query.ilike('title', '%$searchQuery%');
+      }
+
+      final response = await query;
+      return response.length;
+    } catch (e) {
+      print('Error getting favourites count: $e');
       rethrow;
     }
   }
@@ -38,7 +91,17 @@ class FavouriteRepository {
 
       final response = await _client
           .from(_tableName)
-          .select('article_id, user_id, article(pub_date, title, link, image_url, description)')
+          .select('''
+            article_id,
+            user_id,
+            article:article_id (
+              title,
+              pub_date,
+              link,
+              image_url,
+              description
+            )
+          ''')
           .eq('article_id', articleId)
           .eq('user_id', userId)
           .maybeSingle();

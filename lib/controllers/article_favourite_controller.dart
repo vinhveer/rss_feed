@@ -1,5 +1,5 @@
 import 'package:get/get.dart';
-import 'package:rss_feed/repository/article_favourite_repository.dart';
+import 'package:rss_feed/repositories/article_favourite_repository.dart';
 
 class ArticleFavouriteController extends GetxController {
   final ArticleFavouriteRepository _repository = ArticleFavouriteRepository();

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:rss_feed/pages/page_read.dart';
 import '../controllers/favourite_controller.dart';
-import '../models/favourite_item.dart';
-import '../components/feed_list.dart';
-import '../models/feed_item_local.dart';
+import '../types/favourite_item.dart';
+import '../components/card_list/feed_list.dart';
+import '../types/feed_item_local.dart';
 import '../controllers/article_favourite_controller.dart';
+import 'dart:async';
 
 class PageFavourite extends StatefulWidget {
   const PageFavourite({super.key});
@@ -15,11 +17,19 @@ class PageFavourite extends StatefulWidget {
 
 class _PageFavouriteState extends State<PageFavourite> {
   late final FavouriteController controller;
+  final ScrollController _scrollController = ScrollController();
+  final TextEditingController _searchController = TextEditingController();
+  Timer? _debounce;
 
   @override
   void initState() {
     super.initState();
     controller = FavouriteController();
+    _scrollController.addListener(_onScroll);
+    _searchController.addListener(_onSearchChanged);
+    if (!Get.isRegistered<ArticleFavouriteController>()) {
+      Get.put(ArticleFavouriteController());
+    }
     // Load favourites when page is initialized
     WidgetsBinding.instance.addPostFrameCallback((_) {
       controller.loadFavourites();
@@ -28,37 +38,126 @@ class _PageFavouriteState extends State<PageFavourite> {
 
   @override
   void dispose() {
+    _scrollController.dispose();
+    _searchController.dispose();
+    _debounce?.cancel();
     controller.dispose();
     super.dispose();
   }
 
+  void _onScroll() {
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
+      controller.loadFavourites();
+    }
+  }
+
+  void _onSearchChanged() {
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+    _debounce = Timer(const Duration(milliseconds: 400), () {
+      controller.search(_searchController.text);
+    });
+  }
+
+  void _showFilterBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Sắp xếp',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Obx(() => controller.isLoading.value
+              ? const Center(child: CircularProgressIndicator())
+              : Column(
+                  children: [
+                    ListTile(
+                      title: const Text('Ngày đăng mới nhất'),
+                      leading: const Icon(Icons.access_time),
+                      selected: controller.sortBy.value == 'pub_date' && !controller.sortAscending.value,
+                      onTap: () {
+                        controller.sort('pub_date', ascending: false);
+                        Get.back();
+                      },
+                    ),
+                    ListTile(
+                      title: const Text('Ngày đăng cũ nhất'),
+                      leading: const Icon(Icons.access_time),
+                      selected: controller.sortBy.value == 'pub_date' && controller.sortAscending.value,
+                      onTap: () {
+                        controller.sort('pub_date', ascending: true);
+                        Get.back();
+                      },
+                    ),
+                    ListTile(
+                      title: const Text('Tiêu đề A-Z'),
+                      leading: const Icon(Icons.sort_by_alpha),
+                      selected: controller.sortBy.value == 'title' && controller.sortAscending.value,
+                      onTap: () {
+                        controller.sort('title', ascending: true);
+                        Get.back();
+                      },
+                    ),
+                    ListTile(
+                      title: const Text('Tiêu đề Z-A'),
+                      leading: const Icon(Icons.sort_by_alpha),
+                      selected: controller.sortBy.value == 'title' && !controller.sortAscending.value,
+                      onTap: () {
+                        controller.sort('title', ascending: false);
+                        Get.back();
+                      },
+                    ),
+                    ListTile(
+                      title: const Text('Đặt lại'),
+                      leading: const Icon(Icons.refresh),
+                      selected: controller.sortBy.value == 'title' && !controller.sortAscending.value,
+                      onTap: () {
+                        controller.resetFilters();
+                        Get.back();
+                      },
+                    ),
+                  ],
+                ),
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return Obx(() => Scaffold(
       appBar: _buildAppBar(context),
-      body: RefreshIndicator(
-        onRefresh: controller.loadFavourites,
-        child: Obx(() {
-          if (controller.isLoading.value && controller.favourites.isEmpty) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
-          }
+      body: Stack(
+        children: [
+          RefreshIndicator(
+            onRefresh: () => controller.loadFavourites(refresh: true),
+            child: Obx(() {
+              if (controller.isLoading.value && controller.favourites.isEmpty) {
+                return const Center(
+                  child: CircularProgressIndicator(),
+                );
+              }
 
-          return _buildBody(context);
-        }),
+              return _buildBody(context);
+            }),
+          ),
+          if (controller.isLoadingMore.value && controller.favourites.isNotEmpty)
+            const Center(
+              child: CircularProgressIndicator(),
+            ),
+        ],
       ),
-      floatingActionButton: Obx(() {
-        if (controller.isSelectMode.value && controller.selectedItems.isNotEmpty) {
-          return FloatingActionButton(
-            onPressed: _showDeleteConfirmDialog,
-            backgroundColor: Colors.red,
-            child: const Icon(Icons.delete, color: Colors.white),
-          );
-        }
-        return const SizedBox.shrink();
-      }),
-    );
+    ));
   }
 
   PreferredSizeWidget _buildAppBar(BuildContext context) {
@@ -80,24 +179,89 @@ class _PageFavouriteState extends State<PageFavourite> {
     }
 
     return AppBar(
-      title: const Text('Bài viết yêu thích'),
+      title: const Text('Bài viết yêu thích', style: TextStyle(fontWeight: FontWeight.w600)),
+      bottom: PreferredSize(
+        preferredSize: const Size.fromHeight(64),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: TextField(
+            textAlign: TextAlign.justify,
+            controller: _searchController,
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey.shade600,
+            ),
+            decoration: InputDecoration(
+              hintText: 'Tìm kiếm bài viết',
+              hintStyle: TextStyle(
+                color: Colors.grey.shade600,
+                fontSize: 14,
+              ),
+              prefixIcon: Icon(
+                Icons.search,
+                color: Colors.grey.shade600,
+                size: 20,
+              ),
+              suffixIcon: _searchController.text.isNotEmpty
+                  ? IconButton(
+                      icon: Icon(
+                        Icons.clear,
+                        color: Colors.grey.shade600,
+                        size: 18,
+                      ),
+                      onPressed: () {
+                        _searchController.clear();
+                        controller.search('');
+                      },
+                    )
+                  : null,
+              filled: true,
+              fillColor: Colors.grey.shade200,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8.0),
+                borderSide: BorderSide.none,
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8.0),
+                borderSide: BorderSide.none,
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8.0),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 10,
+              ),
+            ),
+            onChanged: (value) {
+              controller.search(value);
+            },
+          ),
+        ),
+      ),
       actions: [
+        IconButton(
+          icon: const Icon(Icons.filter_list),
+          onPressed: _showFilterBottomSheet,
+        ),
         if (controller.favourites.isNotEmpty)
           IconButton(
             icon: const Icon(Icons.select_all),
             onPressed: controller.enableSelectMode,
             tooltip: 'Chọn nhiều',
           ),
-        IconButton(
-          icon: const Icon(Icons.refresh),
-          onPressed: controller.loadFavourites,
-          tooltip: 'Làm mới',
-        ),
       ],
     );
   }
 
   Widget _buildBody(BuildContext context) {
+    if (controller.isLoading.value) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
+
     if (controller.favourites.isEmpty) {
       return _buildEmptyState(context);
     }
@@ -113,6 +277,7 @@ class _PageFavouriteState extends State<PageFavourite> {
         category: '',
         link: favourite.link,
         isVn: true,
+        keywords: const [],
       );
     }).toList();
 
@@ -121,10 +286,17 @@ class _PageFavouriteState extends State<PageFavourite> {
         FeedList(
           items: feedItems,
           emptyCategory: 'yêu thích',
-          onItemTap: _handleItemTap,
+          isSelectMode: controller.isSelectMode.value,
+          isSelected: (fi) => controller.isSelected(
+              controller.favourites.firstWhere((f) => f.id == fi.articleId)),
+          onSelect: (fi) {
+            final fav = controller.favourites.firstWhereOrNull((f) => f.id == fi.articleId);
+            if (fav != null) {
+              controller.toggleItemSelection(fav);
+            }
+          },
+          onItemTap: (fi) => _navigateToDetail(fi),
         ),
-        if (controller.isSelectMode.value)
-          _buildSelectionOverlay(),
       ],
     );
   }
@@ -168,80 +340,8 @@ class _PageFavouriteState extends State<PageFavourite> {
     );
   }
 
-  Widget _buildSelectionOverlay() {
-    return Positioned.fill(
-      child: Container(
-        color: Colors.black.withAlpha(26),
-        child: ListView.builder(
-          padding: const EdgeInsets.all(12),
-          itemCount: controller.favourites.length,
-          itemBuilder: (context, index) {
-            final item = controller.favourites[index];
-            final isSelected = controller.isSelected(item);
-            
-            return Container(
-              margin: const EdgeInsets.only(bottom: 8),
-              decoration: BoxDecoration(
-                border: Border.all(
-                  color: isSelected ? Colors.blue : Colors.transparent,
-                  width: 2,
-                ),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(8),
-                  onTap: () => controller.toggleItemSelection(item),
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    child: Row(
-                      children: [
-                        Checkbox(
-                          value: isSelected,
-                          onChanged: (_) => controller.toggleItemSelection(item),
-                        ),
-                        Expanded(
-                          child: Text(
-                            item.title,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w500,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            );
-          },
-        ),
-      ),
-    );
-  }
-
-  void _handleItemTap(FeedItem item) {
-    if (controller.isSelectMode.value) {
-      // Tìm FavouriteItem tương ứng
-      final favouriteItem = controller.favourites.firstWhereOrNull(
-        (f) => f.id == item.articleId,
-      );
-      if (favouriteItem != null) {
-        controller.toggleItemSelection(favouriteItem);
-      }
-    } else {
-      // Xử lý tap bình thường - có thể navigate đến detail page
-      _navigateToDetail(item);
-    }
-  }
-
   void _navigateToDetail(FeedItem item) {
-    // TODO: Navigate to article detail page
-    // Get.toNamed('/article-detail', arguments: item);
-    print('Navigate to detail: ${item.title}');
+    Get.to(() => PageRead(url: item.link, isVn: item.isVn, articleId: item.articleId));
   }
 
   void _showDeleteConfirmDialog() {
@@ -258,15 +358,22 @@ class _PageFavouriteState extends State<PageFavourite> {
             onPressed: () => Get.back(),
             child: const Text('Hủy'),
           ),
-          TextButton(
-            onPressed: () {
-              Get.back();
-              _deleteSelectedItems();
-            },
-            child: const Text(
-              'Xóa',
-              style: TextStyle(color: Colors.red),
-            ),
+          Obx(() => controller.isLoading.value
+            ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : TextButton(
+                onPressed: () {
+                  Get.back();
+                  _deleteSelectedItems();
+                },
+                child: const Text(
+                  'Xóa',
+                  style: TextStyle(color: Colors.red),
+                ),
+              ),
           ),
         ],
       ),
@@ -280,7 +387,6 @@ class _PageFavouriteState extends State<PageFavourite> {
     try {
       await controller.deleteSelected();
       
-      // Show success snackbar with undo option
       Get.snackbar(
         'Đã xóa',
         'Đã xóa $selectedCount bài viết khỏi danh sách yêu thích',

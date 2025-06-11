@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../services/local_storage_service.dart';
 
 class NamedColor {
   final String name;
@@ -9,11 +10,15 @@ class NamedColor {
 }
 
 class ColorController extends GetxController {
+  static const String _themeModeKey = 'theme_mode';
+  static const String _primaryColorKey = 'primary_color';
+  final _storage = LocalStorageService();
+
   /// Theme mode: light, dark, system
-  final Rx<ThemeMode> themeMode = ThemeMode.system.obs;
+  late final Rx<ThemeMode> themeMode;
 
   /// Primary color swatch
-  final Rx<MaterialColor> primarySwatch = Colors.blue.obs;
+  late final Rx<MaterialColor> primarySwatch;
 
   /// Danh sách các màu với tên tương ứng
   static const List<NamedColor> availableColors = [
@@ -37,6 +42,24 @@ class ColorController extends GetxController {
     NamedColor('Xám', Colors.grey),
     NamedColor('Xanh xám', Colors.blueGrey),
   ];
+
+  @override
+  void onInit() {
+    super.onInit();
+    // Load saved theme mode
+    final savedThemeMode = _storage.get<String>(_themeModeKey);
+    themeMode = (savedThemeMode != null 
+        ? ThemeMode.values.firstWhere(
+            (mode) => mode.toString() == savedThemeMode,
+            orElse: () => ThemeMode.system)
+        : ThemeMode.system).obs;
+
+    // Load saved primary color
+    final savedColorIndex = _storage.get<int>(_primaryColorKey);
+    primarySwatch = (savedColorIndex != null && savedColorIndex < availableColors.length
+        ? availableColors[savedColorIndex].color
+        : Colors.blue).obs;
+  }
 
   /// Getters
   ThemeMode get currentThemeMode => themeMode.value;
@@ -63,8 +86,17 @@ class ColorController extends GetxController {
   }
 
   /// Đổi chế độ theme
-  void changeThemeMode(ThemeMode mode) => themeMode.value = mode;
+  void changeThemeMode(ThemeMode mode) {
+    themeMode.value = mode;
+    _storage.set(_themeModeKey, mode.toString());
+  }
 
   /// Đổi màu chủ đạo
-  void changePrimaryColor(MaterialColor color) => primarySwatch.value = color;
+  void changePrimaryColor(MaterialColor color) {
+    primarySwatch.value = color;
+    final colorIndex = availableColors.indexWhere((c) => c.color == color);
+    if (colorIndex != -1) {
+      _storage.set(_primaryColorKey, colorIndex);
+    }
+  }
 }

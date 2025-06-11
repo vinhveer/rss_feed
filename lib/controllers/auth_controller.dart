@@ -19,7 +19,7 @@ class AuthController extends GetxController {
       final session = data.session;
       if (event == AuthChangeEvent.signedIn) {
         currentUser.value = session?.user;
-        isAnonymous.value = session?.user?.userMetadata?['is_anonymous'] == true;
+        isAnonymous.value = session?.user.userMetadata?['is_anonymous'] == true;
       } else if (event == AuthChangeEvent.signedOut) {
         currentUser.value = null;
         isAnonymous.value = false;

@@ -1,5 +1,5 @@
 import 'package:get/get.dart';
-import '../repository/explore_repository.dart';
+import '../repositories/explore_repository.dart';
 import '../row_row_row/tables/newspaper.row.dart';
 import '../row_row_row/tables/topic.row.dart';
 

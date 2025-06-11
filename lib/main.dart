@@ -1,16 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'controllers/app_controller.dart';
 import 'controllers/article_favourite_controller.dart';
 import 'controllers/color_controller.dart';
 import 'controllers/auth_controller.dart';
+import 'services/api_service.dart';
 import 'app.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: '.env');
+
+  // Initialize GetStorage
+  await GetStorage.init();
 
   // Initialize Supabase
   await Supabase.initialize(
@@ -22,6 +27,7 @@ Future<void> main() async {
   Get.put(AppController(), permanent: true);
   Get.put(ColorController(), permanent: true);
   Get.put(AuthController(), permanent: true);
+  Get.put(ApiService(), permanent: true);
   Get.put(ArticleFavouriteController());
 
   runApp(const MyApp());

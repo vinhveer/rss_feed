@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:rss_feed/pages/account_pages/page_login.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:rss_feed/controllers/color_controller.dart';
 
 class PageResetPassword extends StatefulWidget {
   const PageResetPassword({super.key, required this.email});
@@ -13,6 +14,7 @@ class PageResetPassword extends StatefulWidget {
 
 class _PageResetPasswordState extends State<PageResetPassword> {
   final _formKey = GlobalKey<FormState>();
+  final colorController = Get.find<ColorController>();
   final _newPasswordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
@@ -30,6 +32,7 @@ class _PageResetPasswordState extends State<PageResetPassword> {
 
   @override
   Widget build(BuildContext context) {
+    final primary = colorController.currentSwatch;
     return Scaffold(
       appBar: AppBar(
         title: const Text(

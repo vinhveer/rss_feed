@@ -1,19 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../controllers/article_favourite_controller.dart';
-import '../models/feed_item_local.dart';
+import '../../controllers/article_favourite_controller.dart';
+import '../../types/feed_item_local.dart';
 import 'feed_item_card.dart';
 
 class FeedList extends GetView<ArticleFavouriteController> {
   final List<FeedItem> items;
   final String emptyCategory;
   final Function(FeedItem)? onItemTap;
+  final bool isSelectMode;
+  final bool Function(FeedItem)? isSelected;
+  final Function(FeedItem)? onSelect;
 
   const FeedList({
     super.key,
     required this.items,
     required this.emptyCategory,
     this.onItemTap,
+    this.isSelectMode = false,
+    this.isSelected,
+    this.onSelect,
   });
 
   @override
@@ -45,6 +51,9 @@ class FeedList extends GetView<ArticleFavouriteController> {
           final item = filteredItems[index];
           return FeedItemCard(
             item: item,
+            isSelectMode: isSelectMode,
+            isSelected: isSelected?.call(item) ?? false,
+            onSelect: onSelect != null ? () => onSelect!(item) : null,
             onTap: onItemTap != null ? () => onItemTap!(item) : null,
           );
         },

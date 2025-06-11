@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:rss_feed/controllers/page_read_controller.dart';
-import 'package:rss_feed/components/reading_button.dart';
+import 'package:rss_feed/components/reading_button/reading_button.dart';
 import '../controllers/browser_controller.dart';
 import '../controllers/share_controller.dart';
 import '../controllers/reading_controller.dart';
-import 'package:rss_feed/components/article_markdown_component.dart';
+import 'package:rss_feed/components/markdown/article_markdown_component.dart';
 
 class PageRead extends StatefulWidget {
   final String url;
@@ -423,6 +423,23 @@ class _PageReadState extends State<PageRead> {
         height: 220,
         width: double.infinity,
         fit: BoxFit.cover,
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Container(
+            height: 220,
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Center(
+              child: CircularProgressIndicator(
+                value: loadingProgress.expectedTotalBytes != null
+                    ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                    : null,
+              ),
+            ),
+          );
+        },
         errorBuilder: (context, error, stackTrace) => Container(
           height: 220,
           decoration: BoxDecoration(

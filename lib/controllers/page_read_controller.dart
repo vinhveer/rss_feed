@@ -1,6 +1,6 @@
 import 'package:get/get.dart';
-import 'package:rss_feed/repository/extract_content_repository.dart';
-import '../models/article.dart';
+import 'package:rss_feed/repositories/extract_content_repository.dart';
+import '../types/article.dart';
 import '../controllers/translate_controller.dart';
 
 class PageReadController extends GetxController {

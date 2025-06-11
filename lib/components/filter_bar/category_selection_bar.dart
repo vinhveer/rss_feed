@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+// Một lựa chọn cho mỗi lần
 class CategorySelectionBar extends StatelessWidget {
   final List<String> categories;
   final String selectedCategory;

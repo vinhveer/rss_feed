@@ -19,9 +19,9 @@ class _PageLoginState extends State<PageLogin> {
   bool _showPassword = false;
 
   // Controllers
-  final colorController = ColorController();
+  final colorController = Get.find<ColorController>();
   final AuthController _authController = Get.find<AuthController>();
-  final appController = AppController();
+  final appController = Get.find<AppController>();
 
   void _handleEmailSignIn() async {
     final email = _usernameController.text.trim();

@@ -27,7 +27,7 @@ class AppController extends GetxController {
 
   // Các trang chính
   final List<PageInfo> _pages = [
-    PageInfo(page: PageHome(), id: 'page_home'),
+    PageInfo(page: const PageHome(), id: 'page_home'),
     PageInfo(page: PageExplore(), id: 'page_explore'),
     PageInfo(page: PageFavourite(), id: 'page_favourite'),
     PageInfo(page: PageSettings(), id: 'page_settings'),

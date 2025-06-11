@@ -1,0 +1,79 @@
+DATABASE SCHEMA EXPORT (from OpenAPI Spec)
+Exported at: 2025-06-11 10:05:56.362767
+Supabase URL: https://gykrrtrxzocmjusucnmj.supabase.co
+Project ID: gykrrtrxzocmjusucnmj
+----------------------------------------
+
+Fetching OpenAPI specification from https://gykrrtrxzocmjusucnmj.supabase.co/rest/v1/ ...
+Successfully fetched OpenAPI spec.
+
+TABLES AND VIEWS (from OpenAPI spec):
+--------------------------------------
+
+TABLE/VIEW: newspaper
+COLUMNS:
+  • newspaper_id (bigint, NOT NULL)
+  • newspaper_name (character varying, NOT NULL)
+  • newspaper_image (character varying, NULL)
+  • is_vn (boolean, NULL)
+
+  -> Generated lib/row_row_row/tables/newspaper.row.dart
+TABLE/VIEW: keyword
+COLUMNS:
+  • keyword_id (bigint, NOT NULL)
+  • keyword_name (character varying, NOT NULL)
+  • keyword_md5 (character varying, NOT NULL)
+
+  -> Generated lib/row_row_row/tables/keyword.row.dart
+TABLE/VIEW: topic
+COLUMNS:
+  • topic_id (bigint, NOT NULL)
+  • topic_name (character varying, NOT NULL)
+  • topic_image (text, NULL)
+
+  -> Generated lib/row_row_row/tables/topic.row.dart
+TABLE/VIEW: article_keyword
+COLUMNS:
+  • keyword_id (bigint, NOT NULL) → keyword.keyword_id
+  • article_id (bigint, NOT NULL) → article.article_id
+
+  -> Generated lib/row_row_row/tables/article_keyword.row.dart
+TABLE/VIEW: article
+COLUMNS:
+  • article_id (bigint, NOT NULL)
+  • title (character varying, NOT NULL)
+  • link (character varying, NULL)
+  • image_url (character varying, NULL)
+  • description (character varying, NULL)
+  • pub_date (timestamp with time zone, NULL)
+  • rss_id (bigint, NULL) → rss.id
+  • link_article_md5 (text, NOT NULL)
+
+  -> Generated lib/row_row_row/tables/article.row.dart
+TABLE/VIEW: rss
+COLUMNS:
+  • id (bigint, NOT NULL)
+  • rss_link (text, NULL)
+  • newspaper_id (bigint, NULL) → newspaper.newspaper_id
+  • topic_id (bigint, NULL) → topic.topic_id
+
+  -> Generated lib/row_row_row/tables/rss.row.dart
+TABLE/VIEW: users
+COLUMNS:
+  • user_id (uuid, NOT NULL)
+  • created_at (timestamp with time zone, NULL)
+
+  -> Generated lib/row_row_row/tables/users.row.dart
+TABLE/VIEW: favourite_article
+COLUMNS:
+  • article_id (bigint, NOT NULL) → article.article_id
+  • user_id (uuid, NOT NULL) → users.user_id
+
+  -> Generated lib/row_row_row/tables/favourite_article.row.dart
+TABLE/VIEW: favourite_keyword
+COLUMNS:
+  • user_id (uuid, NOT NULL) → users.user_id
+  • keyword_id (bigint, NOT NULL) → keyword.keyword_id
+
+  -> Generated lib/row_row_row/tables/favourite_keyword.row.dart
+Success: Processed 9 user definitions in OpenAPI spec.

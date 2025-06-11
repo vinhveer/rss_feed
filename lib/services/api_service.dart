@@ -15,7 +15,6 @@ class ApiService {
 
   final String _baseUrl = dotenv.env['EXTRACT_URL'] ?? '';
 
-  // Optional: You can make this getter async if you want to always get the latest token.
   Future<String?> _getBearerToken() async {
     final session = Supabase.instance.client.auth.currentSession;
     final accessToken = session?.accessToken;

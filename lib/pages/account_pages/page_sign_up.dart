@@ -21,7 +21,7 @@ class _PageSignUpState extends State<PageSignUp> {
   bool _acceptTerms = false;
   final RxBool isLoading = false.obs;
 
-  final colorController = ColorController();
+  final colorController = Get.find<ColorController>();
   final _formKey = GlobalKey<FormState>();
 
   String? _validateEmail(String? value) {

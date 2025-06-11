@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:rss_feed/controllers/app_controller.dart';
+import 'package:rss_feed/controllers/color_controller.dart';
 
 class PageBackupRestore extends StatelessWidget {
   const PageBackupRestore({super.key});
@@ -8,6 +9,8 @@ class PageBackupRestore extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appController = Get.find<AppController>();
+    final colorController = Get.find<ColorController>();
+    final primary = colorController.currentSwatch;
 
     return Scaffold(
       appBar: AppBar(

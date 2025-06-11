@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:rss_feed/controllers/color_controller.dart';
 
 class PageAccountInfo extends StatelessWidget {
   const PageAccountInfo({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final colorController = Get.find<ColorController>();
+    final primary = colorController.currentSwatch;
+    
     // Dữ liệu mẫu của người dùng
     final userData = {
       'username': 'trittntu',
@@ -107,10 +111,5 @@ class PageAccountInfo extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  // Widget dialog chỉnh sửa (tùy chọn)
-  void _showEditDialog(BuildContext context, Map<String, String> userData) {
-    // Implementation of edit dialog if needed
   }
 }

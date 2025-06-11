@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:rss_feed/pages/account_pages/page_otp_forget_pass.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:rss_feed/controllers/color_controller.dart';
 
 class PageForgetPass extends StatefulWidget {
   const PageForgetPass({super.key});
@@ -14,6 +15,7 @@ class _PageForgotPasswordState extends State<PageForgetPass> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   bool _isLoading = false;
+  final colorController = Get.find<ColorController>();
 
   @override
   void dispose() {
@@ -23,6 +25,7 @@ class _PageForgotPasswordState extends State<PageForgetPass> {
 
   @override
   Widget build(BuildContext context) {
+    final primary = colorController.currentSwatch;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Quên mật khẩu', style: TextStyle(fontWeight: FontWeight.w600)),

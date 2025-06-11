@@ -1,6 +1,6 @@
 import 'package:get/get.dart';
 import 'package:flutter_tts/flutter_tts.dart';
-import '../repository/extract_content_repository.dart';
+import '../repositories/extract_content_repository.dart';
 
 class ReadingController extends GetxController {
   final ArticleContentRepository _repository = ArticleContentRepository();
@@ -17,8 +17,6 @@ class ReadingController extends GetxController {
   final RxDouble speechRate = 1.0.obs; // Đổi default thành 1.0
 
   List<String> _sentences = [];
-  String _currentCleanedText = '';
-  String? _currentUrl;
   bool _isPaused = false; // Track pause state
 
   @override
@@ -121,7 +119,6 @@ class ReadingController extends GetxController {
       isReading.value = false;
       isPlaying.value = false;
       _isPaused = false;
-      _currentUrl = articleUrl;
 
       final content = await _repository.fetchArticleContent(articleUrl);
       if (content == null) return;
@@ -144,7 +141,6 @@ class ReadingController extends GetxController {
       cleaned = _removeMarkdownLinks(cleaned);
       cleaned = _cleanText(cleaned);
 
-      _currentCleanedText = cleaned;
       _sentences = _splitSentences(cleaned);
       currentIndex.value = 0;
 

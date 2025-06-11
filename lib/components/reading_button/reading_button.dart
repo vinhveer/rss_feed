@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:rss_feed/controllers/reading_controller.dart';
-import '../controllers/article_favourite_controller.dart';
+import '../../controllers/article_favourite_controller.dart';
 
 class ReadingButton extends StatefulWidget {
   final ReadingController controller;

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:rss_feed/pages/settings_pages/page_settings.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:rss_feed/controllers/color_controller.dart';
 
 class PageChangePassword extends StatefulWidget {
   const PageChangePassword({super.key});
@@ -12,6 +13,7 @@ class PageChangePassword extends StatefulWidget {
 
 class _PageChangePasswordState extends State<PageChangePassword> {
   final _formKey = GlobalKey<FormState>();
+  final colorController = Get.find<ColorController>();
 
   final _currentPasswordController = TextEditingController();
   final _newPasswordController = TextEditingController();
@@ -33,6 +35,7 @@ class _PageChangePasswordState extends State<PageChangePassword> {
 
   @override
   Widget build(BuildContext context) {
+    final primary = colorController.currentSwatch;
     return Scaffold(
       appBar: AppBar(
         title: const Text(
