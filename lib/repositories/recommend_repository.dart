@@ -143,4 +143,49 @@ class RecommendRepository {
       rethrow;
     }
   }
+
+  /// Get related articles by keyword name
+  Future<Map<String, dynamic>> getRelatedArticlesByKeywordName({
+    required String keywordName,
+    int limit = 10,
+    int page = 1,
+    int pageSize = 10,
+  }) async {
+    try {
+      final response = await _apiService.get(
+        '/api/v1/recommend/related-keywords-by-name?name=${Uri.encodeComponent(keywordName)}&limit=$limit&page=$page&page_size=$pageSize',
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return data;
+      } else {
+        throw Exception('Failed to load related articles');
+      }
+    } catch (e) {
+      Get.log('Error getting related articles: $e');
+      rethrow;
+    }
+  }
+
+  /// Get related articles for an article
+  Future<List<RecommendArticle>> getRelatedArticlesForArticle(int articleId) async {
+    try {
+      final response = await _apiService.get(
+        '/api/v1/recommend/related-articles/$articleId',
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return (data['articles'] as List)
+            .map((article) => RecommendArticle.fromJson(article))
+            .toList();
+      } else {
+        throw Exception('Failed to load related articles');
+      }
+    } catch (e) {
+      Get.log('Error getting related articles: $e');
+      rethrow;
+    }
+  }
 } 

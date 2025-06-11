@@ -6,6 +6,7 @@ import '../controllers/browser_controller.dart';
 import '../controllers/share_controller.dart';
 import '../controllers/reading_controller.dart';
 import 'package:rss_feed/components/markdown/article_markdown_component.dart';
+import 'package:rss_feed/components/card_list/feed_item_card.dart';
 
 class PageRead extends StatefulWidget {
   final String url;
@@ -358,6 +359,32 @@ class _PageReadState extends State<PageRead> {
               _buildMainImage(theme),
               const SizedBox(height: 20),
               _buildArticleContent(theme),
+              const SizedBox(height: 40),
+              // Bài viết liên quan
+              Obx(() {
+                if (_controller.isLoadingRelated.value) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (_controller.relatedArticles.isEmpty) {
+                  return const SizedBox.shrink();
+                }
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 24),
+                    Text(
+                      'Bài viết liên quan',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.primary,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    ..._controller.relatedArticles.map((item) => FeedItemCard(item: item)).toList(),
+                  ],
+                );
+              }),
               const SizedBox(height: 120),
             ],
           ),

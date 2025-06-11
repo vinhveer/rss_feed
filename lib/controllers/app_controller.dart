@@ -45,6 +45,7 @@ class AppController extends GetxController {
   void goToChangePassword() => Get.to(() => PageChangePassword());
   void goToForgetPassword() => Get.to(() => PageForgetPass());
   void goToSignUp() => Get.to(() => PageSignUp());
+  void goToPageChooseTopic() => Get.to(() => PageChooseTopic());
 
   // Cập nhật trạng thái cuộn
   void updateScrollStatus(double offset) => _isScrolled.value = offset > 0;

@@ -13,7 +13,15 @@ class RecommendKeyword {
     return RecommendKeyword(
       keywordId: json['keyword_id'],
       keywordName: json['keyword_name'],
-      articleCount: json['article_count'],
+      articleCount: json['article_count'] ?? 0,
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'keyword_id': keywordId,
+      'keyword_name': keywordName,
+      'article_count': articleCount,
+    };
   }
 } 

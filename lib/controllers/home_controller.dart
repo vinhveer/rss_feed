@@ -110,7 +110,7 @@ class HomeController extends GetxController {
     isLoadingKeywords.value = true;
     try {
       // First try to get keywords from local storage
-      final storedKeywords = _keywordRepository.getKeywordsFromStorage();
+      final storedKeywords = await _keywordRepository.getKeywordsFromStorage();
       
       if (storedKeywords.isNotEmpty) {
         // Convert stored keywords to RecommendKeyword objects

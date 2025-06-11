@@ -2,6 +2,8 @@ import 'package:get/get.dart';
 import 'package:rss_feed/repositories/extract_content_repository.dart';
 import '../types/article.dart';
 import '../controllers/translate_controller.dart';
+import '../repositories/recommend_repository.dart';
+import '../types/feed_item_local.dart';
 
 class PageReadController extends GetxController {
   final String url;
@@ -15,6 +17,7 @@ class PageReadController extends GetxController {
   });
 
   final _repository = ArticleContentRepository();
+  final _recommendRepository = RecommendRepository();
   final _translateService = TranslateController();
 
   // Observable states
@@ -26,6 +29,10 @@ class PageReadController extends GetxController {
   final _isContentLoaded = false.obs;
   final _showFontSizeSlider = false.obs;
   final _fontSize = 18.0.obs;
+
+  // Bài viết liên quan
+  final RxList<FeedItem> relatedArticles = <FeedItem>[].obs;
+  final RxBool isLoadingRelated = false.obs;
 
   // Getters
   ArticleData? get article => _article.value;
@@ -59,6 +66,8 @@ class PageReadController extends GetxController {
         _originalArticle.value = articleData;
         _article.value = articleData;
         _isContentLoaded.value = true;
+        // Fetch related articles sau khi load xong bài chính
+        fetchRelatedArticles();
       } else {
         _article.value = null;
       }
@@ -71,6 +80,37 @@ class PageReadController extends GetxController {
       );
     } finally {
       _loading.value = false;
+    }
+  }
+
+  Future<void> fetchRelatedArticles() async {
+    if (articleId == 0) return;
+    isLoadingRelated.value = true;
+    try {
+      // Lấy bài viết liên quan trực tiếp
+      final articles = await _recommendRepository.getRelatedArticlesForArticle(articleId);
+      if (articles.isEmpty) {
+        relatedArticles.clear();
+        return;
+      }
+      // Convert sang FeedItem
+      relatedArticles.assignAll(
+        articles.map((a) => FeedItem(
+          articleId: a.articleId,
+          title: a.title,
+          source: a.description,
+          timeAgo: a.pubDate.toString(),
+          imageUrl: a.imageUrl,
+          category: '', // Không có category trong API response
+          link: a.link,
+          isVn: true, // Mặc định là true vì không có thông tin trong API
+          keywords: const [], // Không có keywords trong API response
+        )).where((a) => a.articleId != articleId).toList(),
+      );
+    } catch (e) {
+      relatedArticles.clear();
+    } finally {
+      isLoadingRelated.value = false;
     }
   }
 
