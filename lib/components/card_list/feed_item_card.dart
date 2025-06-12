@@ -32,7 +32,6 @@ class _FeedItemCardState extends State<FeedItemCard> {
   bool isFavourited = false;
   final ArticleFavouriteController _favouriteController = Get.find<ArticleFavouriteController>();
   final KeywordRepository _keywordRepository = KeywordRepository();
-  bool _isImageLoading = true;
 
   @override
   void initState() {
@@ -43,25 +42,21 @@ class _FeedItemCardState extends State<FeedItemCard> {
   Future<void> _loadFavouriteStatus() async {
     final status = await _favouriteController.isFavourited(widget.item.articleId);
     if (mounted) {
-      setState(() {
-        isFavourited = status;
-      });
+      setState(() => isFavourited = status);
     }
   }
 
-  void _shareItem(String title) {
+  void _shareItem() {
     SharePlus.instance.share(
-      ShareParams(
-        text: 'Tin tức thú vị hôm nay! $title',
-      ),
+      ShareParams(text: 'Tin tức thú vị hôm nay! ${widget.item.title}'),
     );
   }
 
   String _formatDate(String dateStr) {
     try {
-      final date = DateTime.parse(dateStr);
+      final date = DateTime.parse(dateStr).toLocal();
       final now = DateTime.now();
-      final difference = now.difference(date);
+      final difference = now.difference(date).abs();
 
       if (difference.inDays == 0) {
         if (difference.inHours == 0) {
@@ -70,246 +65,165 @@ class _FeedItemCardState extends State<FeedItemCard> {
         return '${difference.inHours} giờ trước';
       } else if (difference.inDays < 7) {
         return '${difference.inDays} ngày trước';
-      } else {
-        return DateFormat('dd/MM/yyyy').format(date);
       }
+      return DateFormat('dd/MM/yyyy').format(date);
     } catch (e) {
       return dateStr;
     }
   }
 
   Future<void> _toggleFavourite() async {
-    try {
+    try {      
       if (isFavourited) {
         await _favouriteController.removeFromFavourite(widget.item.articleId);
-        if (mounted) {
-          setState(() => isFavourited = false);
-          Get.snackbar(
-            'Đã xóa',
-            'Đã xóa khỏi mục yêu thích',
-            snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: Get.theme.colorScheme.primary,
-            colorText: Get.theme.colorScheme.onPrimary,
-          );
-        }
       } else {
         await _favouriteController.addToFavourite(widget.item.articleId);
-        if (mounted) {
-          setState(() => isFavourited = true);
-          Get.snackbar(
-            'Đã thêm',
-            'Đã thêm vào mục yêu thích',
-            snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: Get.theme.colorScheme.primary,
-            colorText: Get.theme.colorScheme.onPrimary,
-          );
-        }
+      }
+
+      if (mounted) {
+        setState(() => isFavourited = !isFavourited);
       }
     } catch (e) {
-      if (mounted) {
-        Get.snackbar(
-          'Lỗi',
-          'Có lỗi xảy ra, vui lòng thử lại',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Get.theme.colorScheme.error,
-          colorText: Get.theme.colorScheme.onError,
-        );
-      }
+      Get.log(e.toString());
     }
   }
 
   Future<void> _handleArticleTap() async {
-    // Lưu keywords vào local storage
     await _keywordRepository.addKeywordsToStorage(widget.item.articleId);
     
-    // Chuyển đến trang đọc bài viết
     if (widget.onTap != null) {
       widget.onTap!();
     } else {
       Get.to(() => PageRead(
-            url: widget.item.link,
-            isVn: widget.item.isVn,
-            articleId: widget.item.articleId,
-          ));
+        url: widget.item.link,
+        isVn: widget.item.isVn,
+        articleId: widget.item.articleId,
+      ));
     }
+  }
+
+  Widget _buildKeywordChip(String keyword) {
+    return Chip(
+      label: Text(
+        keyword.toUpperCase(),
+        style: const TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      visualDensity: VisualDensity.compact,
+    );
+  }
+
+  Widget _buildSelectionOverlay() {
+    if (!widget.isSelectMode) return const SizedBox.shrink();
+    
+    return Positioned(
+      top: 12,
+      right: 12,
+      child: CircleAvatar(
+        radius: 12,
+        backgroundColor: widget.isSelected 
+            ? Theme.of(context).colorScheme.primary
+            : Theme.of(context).colorScheme.surface,
+        child: Icon(
+          Icons.check,
+          size: 16,
+          color: widget.isSelected 
+              ? Theme.of(context).colorScheme.onPrimary
+              : Colors.transparent,
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: widget.isSelected 
-            ? const BorderSide(color: Colors.blue, width: 2)
-            : BorderSide.none,
-      ),
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: widget.isSelectMode
-            ? widget.onSelect
-            : _handleArticleTap,
-        borderRadius: BorderRadius.circular(12),
+        onTap: widget.isSelectMode ? widget.onSelect : _handleArticleTap,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Image with overlay
             Stack(
               children: [
-                ClipRRect(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                  child: AspectRatio(
-                    aspectRatio: 16 / 9,
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        Image.network(
-                          widget.item.imageUrl,
-                          fit: BoxFit.cover,
-                          loadingBuilder: (context, child, loadingProgress) {
-                            if (loadingProgress == null) {
-                              _isImageLoading = false;
-                              return child;
-                            }
-                            return Container(
-                              color: isDarkMode ? Colors.grey[800] : Colors.grey[200],
-                              child: Center(
-                                child: CircularProgressIndicator(
-                                  value: loadingProgress.expectedTotalBytes != null
-                                      ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
-                                      : null,
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    isDarkMode ? Colors.white70 : Colors.black54,
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
-                          errorBuilder: (context, error, stackTrace) {
-                            return Image.asset(
-                              'assets/defaultimage.jpg',
-                              fit: BoxFit.cover,
-                            );
-                          },
-                        ),
-                        if (_isImageLoading)
-                          Container(
-                            color: isDarkMode ? Colors.grey[800] : Colors.grey[200],
-                            child: const Center(
-                              child: CircularProgressIndicator(),
-                            ),
-                          ),
-                      ],
-                    ),
+                AspectRatio(
+                  aspectRatio: 16 / 9,
+                  child: Image.network(
+                    widget.item.imageUrl,
+                    fit: BoxFit.cover,
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return const Center(child: CircularProgressIndicator());
+                    },
+                    errorBuilder: (context, error, stackTrace) {
+                      return Image.asset(
+                        'assets/defaultimage.jpg',
+                        fit: BoxFit.cover,
+                      );
+                    },
                   ),
                 ),
-                if (widget.isSelectMode)
-                  Positioned(
-                    top: 8,
-                    right: 8,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: widget.isSelected ? Colors.blue : Colors.white,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: widget.isSelected ? Colors.blue : Colors.grey,
-                          width: 2,
-                        ),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(2),
-                        child: Icon(
-                          Icons.check,
-                          size: 20,
-                          color: widget.isSelected ? Colors.white : Colors.transparent,
-                        ),
-                      ),
-                    ),
-                  ),
+                _buildSelectionOverlay(),
               ],
             ),
+            
+            // Content
             Padding(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     widget.item.title,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      color: isDarkMode ? Colors.white : Colors.black87,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
+                  
+                  if (widget.item.source.isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      widget.item.source,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                  
                   const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 4,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    children: [
-                      Text(
-                        widget.item.source,
-                        style: TextStyle(
-                          color: isDarkMode ? Colors.grey[300] : Colors.grey[700],
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      Container(
-                        width: 4,
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: isDarkMode ? Colors.grey[500] : Colors.grey[400],
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      Text(
-                        _formatDate(widget.item.timeAgo),
-                        style: TextStyle(
-                          color: isDarkMode ? Colors.grey[400] : Colors.grey[500],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
 
-                  // Hiển thị danh sách keywords
-                  if (widget.item.keywords.isNotEmpty)
+                  Text(
+                    _formatDate(widget.item.timeAgo),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  
+                  if (widget.item.keywords.isNotEmpty) ...[
+                    const SizedBox(height: 12),
                     Wrap(
                       spacing: 6,
                       runSpacing: 6,
-                      children: widget.item.keywords.map((kw) {
-                        return Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: isDarkMode 
-                                ? Colors.blue.withOpacity(0.2)
-                                : Colors.blue.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            kw.toUpperCase(),
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: isDarkMode 
-                                  ? Colors.blue[200]
-                                  : Colors.blue[700],
-                            ),
-                          ),
-                        );
-                      }).toList(),
+                      children: widget.item.keywords
+                          .map(_buildKeywordChip)
+                          .toList(),
                     ),
-
-                  const SizedBox(height: 8),
-
+                  ],
+                  
+                  const SizedBox(height: 12),
                   ItemActionBar(
-                    onLeftAction: () => _shareItem(widget.item.title),
+                    onLeftAction: _shareItem,
                     onRightAction: _toggleFavourite,
-                    leftIcon: Icons.share,
+                    leftIcon: Icons.share_outlined,
                     rightIcon: isFavourited ? Icons.favorite : Icons.favorite_border,
                     leftTooltip: 'Chia sẻ',
                     rightTooltip: isFavourited ? 'Bỏ yêu thích' : 'Yêu thích',

@@ -245,13 +245,13 @@ class KeywordRepository {
             keywordId: keywordId,
           );
         } catch (e) {
-          print('Error syncing keyword $keywordId: $e');
+          Get.log('Error syncing keyword $keywordId: $e');
         }
       }
 
-      print('Successfully synced keywords to cloud');
+      Get.log('Successfully synced keywords to cloud');
     } catch (e) {
-      print('Error syncing to cloud: $e');
+      Get.log('Error syncing to cloud: $e');
     }
   }
 
@@ -267,7 +267,7 @@ class KeywordRepository {
           .map((json) => KeywordRow.fromJson(json['keyword']))
           .toList();
     } catch (e) {
-      print('Error getting cloud keywords: $e');
+      Get.log('Error getting cloud keywords: $e');
       return [];
     }
   }
@@ -307,7 +307,7 @@ class KeywordRepository {
     await _storage.set(_storageKey, limitedKeywords);
 
     if (keywords.length != limitedKeywords.length) {
-      print(
+      Get.log(
         'Limited keywords: ${keywords.length} -> ${limitedKeywords.length}',
       );
     }
@@ -335,11 +335,11 @@ class KeywordRepository {
   /// Manual sync - force sync both ways
   Future<void> manualSync() async {
     try {
-      print('Starting manual sync...');
+      Get.log('Starting manual sync...');
 
       final userId = Supabase.instance.client.auth.currentUser?.id;
       if (userId == null) {
-        print('No user logged in');
+        Get.log('No user logged in');
         return;
       }
 
@@ -360,7 +360,7 @@ class KeywordRepository {
               .toList();
 
       if (cloudOnlyKeywords.isNotEmpty) {
-        print(
+        Get.log(
           'Adding ${cloudOnlyKeywords.length} keywords from cloud to local',
         );
 
@@ -379,16 +379,16 @@ class KeywordRepository {
         await _saveLocalKeywords(newLocalKeywords);
       }
 
-      print('Manual sync completed');
+      Get.log('Manual sync completed');
     } catch (e) {
-      print('Error during manual sync: $e');
+      Get.log('Error during manual sync: $e');
     }
   }
 
   /// Clear local cache
   Future<void> clearLocalKeywords() async {
     await _storage.set(_storageKey, null);
-    print('Local keywords cleared');
+    Get.log('Local keywords cleared');
   }
 
   /// Get simple stats

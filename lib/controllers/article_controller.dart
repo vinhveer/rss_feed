@@ -45,7 +45,7 @@ class ArticleController extends GetxController {
       topics.assignAll(result);
     } catch (e) {
       // ignore lỗi để không chặn luồng chính
-      print('Error load topics: $e');
+      Get.log('Error load topics: $e');
     }
   }
 
@@ -95,7 +95,7 @@ class ArticleController extends GetxController {
 
       _currentOffset += fetched.length;
     } catch (e) {
-      print('Error load articles: $e');
+      Get.log('Error load articles: $e');
       Get.snackbar('Lỗi', 'Không thể tải bài viết: $e',
           snackPosition: SnackPosition.BOTTOM);
     } finally {

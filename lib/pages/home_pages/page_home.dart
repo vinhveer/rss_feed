@@ -20,6 +20,15 @@ class _PageHomeState extends State<PageHome> {
   @override
   void initState() {
     super.initState();
+    _initializeController();
+  }
+
+  void _initializeController() {
+    // Xóa controller cũ nếu có
+    if (Get.isRegistered<HomeController>()) {
+      Get.delete<HomeController>();
+    }
+    // Khởi tạo controller mới
     _controller = Get.put(HomeController());
 
     _scrollController.addListener(() {
@@ -32,7 +41,6 @@ class _PageHomeState extends State<PageHome> {
   @override
   void dispose() {
     _scrollController.dispose();
-    Get.delete<HomeController>();
     super.dispose();
   }
 
@@ -46,28 +54,41 @@ class _PageHomeState extends State<PageHome> {
             icon: const Icon(Icons.search),
             onPressed: () => Get.to(() => PageSearchArticle()),
           ),
-          Obx(() => (_controller.isLoadingArticles.value || _controller.isLoadingMore.value)
-              ? Padding(
-                  padding: const EdgeInsets.only(right: 16.0),
-                  child: SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        Theme.of(context).colorScheme.onPrimary,
-                      ),
-                    ),
-                  ),
-                )
-              : const SizedBox.shrink()),
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(50),
-          child: _buildTopicChips(),
+          child: Obx(() => _controller.hasInitialized.value
+              ? _buildTopicChips()
+              : const SizedBox.shrink()),
         ),
       ),
       body: Obx(() {
+        if (_controller.isLoadingKeywords.value) {
+          return const Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(height: 16),
+                Text('Đang kiểm tra chủ đề của bạn...'),
+              ],
+            ),
+          );
+        }
+
+        if (!_controller.hasInitialized.value) {
+          return const Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.topic, size: 48, color: Colors.grey),
+                SizedBox(height: 16),
+                Text('Vui lòng chọn chủ đề để bắt đầu'),
+              ],
+            ),
+          );
+        }
+
         if (_controller.isLoadingArticles.value && _controller.articles.isEmpty) {
           return const Center(child: CircularProgressIndicator());
         }

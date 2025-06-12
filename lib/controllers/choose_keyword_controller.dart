@@ -74,7 +74,9 @@ class ChooseKeywordController extends GetxController {
   // Getter để lấy danh sách related keywords hiện tại (cho UI cũ nếu cần)
   List<RecommendKeyword> get currentRelatedKeywords {
     List<RecommendKeyword> allRelated = [];
-    relatedKeywordsMap.values.forEach((list) => allRelated.addAll(list));
+    for (var list in relatedKeywordsMap.values) {
+      allRelated.addAll(list);
+    }
     return allRelated;
   }
 

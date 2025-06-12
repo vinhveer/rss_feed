@@ -1,4 +1,5 @@
 import 'package:get_storage/get_storage.dart';
+import 'package:get/get.dart';
 
 class LocalStorageService {
   static final LocalStorageService _instance = LocalStorageService._internal();
@@ -13,7 +14,7 @@ class LocalStorageService {
     try {
       return _storage.read<T>(key);
     } catch (e) {
-      print('Error reading from storage: $e');
+      Get.log('Error reading from storage: $e');
       return null;
     }
   }
@@ -28,7 +29,7 @@ class LocalStorageService {
         await _storage.write(key, value);
       }
     } catch (e) {
-      print('Error writing to storage: $e');
+      Get.log('Error writing to storage: $e');
     }
   }
 } 

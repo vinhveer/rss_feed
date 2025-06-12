@@ -381,7 +381,21 @@ class _PageReadState extends State<PageRead> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    ..._controller.relatedArticles.map((item) => FeedItemCard(item: item)).toList(),
+                    ..._controller.relatedArticles.map((item) => FeedItemCard(
+                      item: item,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => PageRead(
+                              url: item.link,
+                              isVn: widget.isVn,
+                              articleId: item.articleId,
+                            ),
+                          ),
+                        );
+                      },
+                    )).toList(),
                   ],
                 );
               }),

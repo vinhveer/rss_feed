@@ -17,10 +17,7 @@ class FavouriteItem {
     required this.pubDate,
   });
 
-  factory FavouriteItem.fromMap(Map<String, dynamic> map) {
-    // Debug log để xem cấu trúc dữ liệu
-    print('FavouriteItem.fromMap received: $map');
-    
+  factory FavouriteItem.fromMap(Map<String, dynamic> map) {    
     final article = map['article'] as Map<String, dynamic>?;
     if (article == null) {
       throw Exception('Article data is null in favourite item: $map');
@@ -37,10 +34,7 @@ class FavouriteItem {
     );
   }
 
-  factory FavouriteItem.fromMapDirect(Map<String, dynamic> map, String userId) {
-    // Debug log để xem cấu trúc dữ liệu từ article table
-    print('FavouriteItem.fromMapDirect received: $map');
-    
+  factory FavouriteItem.fromMapDirect(Map<String, dynamic> map, String userId) {    
     return FavouriteItem(
       id: map['article_id'] as int,
       userId: userId,

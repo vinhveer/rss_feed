@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../controllers/find_controller.dart';
+import 'page_article.dart';
 
 class PageFind extends StatelessWidget {
   const PageFind({super.key});
@@ -78,11 +79,11 @@ class PageFind extends StatelessWidget {
                         subtitle: const Text('Chủ đề'),
                         trailing: const Icon(Icons.arrow_forward_ios, size: 16.0),
                         onTap: () {
-                          // Get.to(() => PageArticle(
-                          //   id: topic.topicId.toString(),
-                          //   isTopic: true,
-                          //   title: topic.topicName,
-                          // ));
+                          Get.to(() => PageArticle(
+                            id: topic.topicId,
+                            isTopic: true,
+                            title: topic.topicName,
+                          ));
                         },
                       );
                     },
@@ -139,11 +140,11 @@ class PageFind extends StatelessWidget {
                         subtitle: const Text('Trang báo'),
                         trailing: const Icon(Icons.arrow_forward_ios, size: 16.0),
                         onTap: () {
-                          // Get.to(() => PageArticle(
-                          //   id: newspaper.newspaperId.toString(),
-                          //   isTopic: false,
-                          //   title: newspaper.newspaperName,
-                          // ));
+                          Get.to(() => PageArticle(
+                            id: newspaper.newspaperId,
+                            isTopic: false,
+                            title: newspaper.newspaperName,
+                          ));
                         },
                       );
                     },

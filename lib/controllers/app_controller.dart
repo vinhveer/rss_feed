@@ -12,6 +12,7 @@ import 'package:rss_feed/pages/page_read.dart';
 import 'package:rss_feed/pages/settings_pages/page_settings.dart';
 import 'package:rss_feed/pages/settings_pages/color_scheme_settings_page.dart';
 import 'package:rss_feed/pages/settings_pages/theme_mode_setting_page.dart';
+import 'package:rss_feed/controllers/home_controller.dart';
 
 class AppController extends GetxController {
   // Trang hiện tại và trạng thái cuộn
@@ -33,7 +34,16 @@ class AppController extends GetxController {
   Widget get currentPage => _pages[currentIndex].page;
 
   // Thay đổi trang
-  void changePage(int index) => _currentIndex.value = index;
+  void changePage(int index) {
+    if (index == 0) {
+      // Nếu chuyển về trang chủ, khởi tạo lại HomeController
+      if (Get.isRegistered<HomeController>()) {
+        Get.delete<HomeController>();
+      }
+      Get.put(HomeController());
+    }
+    _currentIndex.value = index;
+  }
 
   // Điều hướng
   void goToChooseTopic() => Get.to(() => PageChooseTopic());

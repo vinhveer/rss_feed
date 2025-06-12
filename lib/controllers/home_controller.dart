@@ -3,6 +3,7 @@ import '../repositories/recommend_repository.dart';
 import '../repositories/keyword_repository.dart';
 import '../types/recommend_article.dart';
 import '../types/recommend_keyword.dart';
+import '../controllers/app_controller.dart';
 
 class HomeController extends GetxController {
   final RecommendRepository _repository = RecommendRepository();
@@ -17,6 +18,7 @@ class HomeController extends GetxController {
   final RxBool isLoadingArticles = false.obs;
   final RxBool isLoadingMore = false.obs;
   final RxBool isLoadingKeywords = false.obs;
+  final RxBool hasInitialized = false.obs;
 
   static const int _pageSize = 10;
   int _currentPage = 1;
@@ -24,14 +26,49 @@ class HomeController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    loadInitialData();
+    checkKeywordsAndInitialize();
   }
 
-  Future<void> loadInitialData() async {
-    // Load keywords first
-    await loadKeywords();
-    // Then load articles
-    loadArticles();
+  Future<void> checkKeywordsAndInitialize() async {
+    isLoadingKeywords.value = true;
+    try {
+      // Kiểm tra keywords trong local storage
+      final storedKeywords = await _keywordRepository.getKeywordsFromStorage();
+      
+      if (storedKeywords.isEmpty) {
+        // Nếu chưa có keywords, chuyển đến trang chọn chủ đề
+        Get.find<AppController>().goToPageChooseTopic();
+        return;
+      }
+
+      // Nếu đã có keywords, khởi tạo data
+      await initializeData();
+    } catch (e) {
+      Get.snackbar(
+        'Lỗi',
+        'Không thể kiểm tra keywords: ${e.toString()}',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } finally {
+      isLoadingKeywords.value = false;
+    }
+  }
+
+  Future<void> initializeData() async {
+    // Convert stored keywords to RecommendKeyword objects
+    final storedKeywords = await _keywordRepository.getKeywordsFromStorage();
+    final convertedKeywords = storedKeywords
+        .map((k) => RecommendKeyword(
+              keywordId: k['keyword']['keyword_id'],
+              keywordName: k['keyword']['keyword_name'],
+              articleCount: 0,
+            ))
+        .toList();
+    keywords.assignAll(convertedKeywords);
+
+    // Load articles
+    await loadArticles();
+    hasInitialized.value = true;
   }
 
   Future<void> loadArticles({bool refresh = false}) async {
@@ -104,37 +141,5 @@ class HomeController extends GetxController {
   void selectCategory(String category) {
     selectedCategory.value = category;
     loadArticles(refresh: true);
-  }
-
-  Future<void> loadKeywords() async {
-    isLoadingKeywords.value = true;
-    try {
-      // First try to get keywords from local storage
-      final storedKeywords = await _keywordRepository.getKeywordsFromStorage();
-      
-      if (storedKeywords.isNotEmpty) {
-        // Convert stored keywords to RecommendKeyword objects
-        final convertedKeywords = storedKeywords
-            .map((k) => RecommendKeyword(
-                  keywordId: k['keyword']['keyword_id'],
-                  keywordName: k['keyword']['keyword_name'],
-                  articleCount: 0, // We don't have article count in stored keywords
-                ))
-            .toList();
-        keywords.assignAll(convertedKeywords);
-      } else {
-        // If no stored keywords, fetch hot keywords
-        final fetchedKeywords = await _repository.getHotKeywords();
-        keywords.assignAll(fetchedKeywords);
-      }
-    } catch (e) {
-      Get.snackbar(
-        'Lỗi',
-        'Không thể tải keywords: ${e.toString()}',
-        snackPosition: SnackPosition.BOTTOM,
-      );
-    } finally {
-      isLoadingKeywords.value = false;
-    }
   }
 }

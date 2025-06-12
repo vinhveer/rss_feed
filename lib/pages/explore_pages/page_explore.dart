@@ -230,102 +230,163 @@ class PageExplore extends StatelessWidget {
                   ),
                   const SizedBox(height: 16.0),
 
-                  // List view cho đầu báo
-                  ListView.builder(
+                  // Grid view cho đầu báo
+                  GridView.builder(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 16.0,
+                      mainAxisSpacing: 16.0,
+                      childAspectRatio: 1.5,
+                    ),
                     itemCount: exploreController.newspapers.length,
                     itemBuilder: (context, index) {
                       final newspaper = exploreController.newspapers[index];
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 12.0),
-                        decoration: BoxDecoration(
-                          color: Colors.transparent,
-                          borderRadius: BorderRadius.circular(8.0),
-                          border: Border.all(color: primary.withAlpha(179)),
-                          boxShadow: [
-                            BoxShadow(
-                              color: primary.withAlpha(38),
-                              spreadRadius: 1,
-                              blurRadius: 4,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: ListTile(
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                          leading: Container(
-                            width: 48,
-                            height: 48,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(8.0),
-                              color: primary.withAlpha(25),
-                            ),
-                            child: newspaper.newspaperImage != null
-                                ? ClipRRect(
-                                    borderRadius: BorderRadius.circular(8.0),
-                                    child: Image.network(
-                                      newspaper.newspaperImage!,
-                                      fit: BoxFit.cover,
-                                      loadingBuilder: (context, child, loadingProgress) {
-                                        if (loadingProgress == null) {
-                                          if (index == exploreController.newspapers.length - 1) {
-                                            Future.delayed(const Duration(milliseconds: 100), () {
-                                              isLoadingImages.value = false;
-                                            });
-                                          }
-                                          return child;
-                                        }
-                                        return Center(
+                      return InkWell(
+                        onTap: () {
+                          Get.to(() => PageArticle(
+                            id: newspaper.newspaperId,
+                            isTopic: false,
+                            title: newspaper.newspaperName,
+                          ));
+                        },
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.transparent,
+                            borderRadius: BorderRadius.circular(8.0),
+                            border: Border.all(color: primary.withAlpha(179)),
+                            boxShadow: [
+                              BoxShadow(
+                                color: primary.withAlpha(38),
+                                spreadRadius: 1,
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Stack(
+                            children: [
+                              // Background image or gradient
+                              Positioned.fill(
+                                child: newspaper.newspaperImage != null
+                                    ? ClipRRect(
+                                        borderRadius: BorderRadius.circular(8.0),
+                                        child: Image.network(
+                                          newspaper.newspaperImage!,
+                                          fit: BoxFit.cover,
+                                          loadingBuilder: (context, child, loadingProgress) {
+                                            if (loadingProgress == null) {
+                                              if (index == exploreController.newspapers.length - 1) {
+                                                Future.delayed(const Duration(milliseconds: 100), () {
+                                                  isLoadingImages.value = false;
+                                                });
+                                              }
+                                              return child;
+                                            }
+                                            return Container(
+                                              decoration: BoxDecoration(
+                                                gradient: LinearGradient(
+                                                  begin: Alignment.topCenter,
+                                                  end: Alignment.bottomCenter,
+                                                  colors: [
+                                                    primary.withAlpha(38),
+                                                    primary.withAlpha(25),
+                                                  ],
+                                                ),
+                                              ),
+                                              child: Center(
+                                                child: CircularProgressIndicator(
+                                                  value: loadingProgress.expectedTotalBytes != null
+                                                      ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                                                      : null,
+                                                  strokeWidth: 2,
+                                                  valueColor: AlwaysStoppedAnimation<Color>(primary),
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                          errorBuilder: (context, error, stackTrace) =>
+                                              Container(
+                                                decoration: BoxDecoration(
+                                                  gradient: LinearGradient(
+                                                    begin: Alignment.topCenter,
+                                                    end: Alignment.bottomCenter,
+                                                    colors: [
+                                                      primary.withAlpha(38),
+                                                      primary.withAlpha(25),
+                                                    ],
+                                                  ),
+                                                ),
+                                                child: Center(
+                                                  child: Text(
+                                                    newspaper.newspaperName.substring(0, 1).toUpperCase(),
+                                                    style: TextStyle(
+                                                      color: primary,
+                                                      fontWeight: FontWeight.bold,
+                                                      fontSize: 32,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                        ),
+                                      )
+                                    : Container(
+                                        decoration: BoxDecoration(
+                                          gradient: LinearGradient(
+                                            begin: Alignment.topCenter,
+                                            end: Alignment.bottomCenter,
+                                            colors: [
+                                              primary.withAlpha(38),
+                                              primary.withAlpha(25),
+                                            ],
+                                          ),
+                                        ),
+                                        child: Center(
                                           child: Text(
                                             newspaper.newspaperName.substring(0, 1).toUpperCase(),
                                             style: TextStyle(
                                               color: primary,
                                               fontWeight: FontWeight.bold,
-                                              fontSize: 20,
+                                              fontSize: 32,
                                             ),
                                           ),
-                                        );
-                                      },
-                                      errorBuilder: (context, error, stackTrace) =>
-                                          Center(
-                                            child: Text(
-                                              newspaper.newspaperName.substring(0, 1).toUpperCase(),
-                                              style: TextStyle(
-                                                color: primary,
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 20,
-                                              ),
-                                            ),
-                                          ),
-                                    ),
-                                  )
-                                : Center(
-                                    child: Text(
-                                      newspaper.newspaperName.substring(0, 1).toUpperCase(),
-                                      style: TextStyle(
-                                        color: primary,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 20,
+                                        ),
                                       ),
+                              ),
+                              // Semi-transparent overlay for better text readability
+                              Positioned.fill(
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(8.0),
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                      colors: [
+                                        Colors.transparent,
+                                        Colors.black.withAlpha(128),
+                                      ],
                                     ),
                                   ),
+                                ),
+                              ),
+                              // Content
+                              Positioned(
+                                bottom: 12,
+                                left: 12,
+                                right: 12,
+                                child: Text(
+                                  newspaper.newspaperName,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16.0,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                          title: Text(
-                            newspaper.newspaperName,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          trailing: const Icon(Icons.chevron_right),
-                          onTap: () {
-                            Get.to(() => PageArticle(
-                              id: newspaper.newspaperId,
-                              isTopic: false,
-                              title: newspaper.newspaperName,
-                            ));
-                          },
                         ),
                       );
                     },
