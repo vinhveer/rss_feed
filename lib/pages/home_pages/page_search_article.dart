@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../components/card_list/feed_item_card.dart';
 import '../../controllers/search_controller.dart' as search;
+import '../page_read.dart';
 
 class PageSearchArticle extends StatelessWidget {
   final search.SearchController _controller = Get.put(search.SearchController());
@@ -95,7 +96,11 @@ class PageSearchArticle extends StatelessWidget {
               return FeedItemCard(
                 item: item,
                 onTap: () {
-                  // Handle article tap
+                  Get.to(() => PageRead(
+                    url: item.link,
+                    isVn: item.isVn,
+                    articleId: item.articleId,
+                  ));
                 },
               );
             },

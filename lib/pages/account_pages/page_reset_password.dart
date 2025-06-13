@@ -20,7 +20,6 @@ class _PageResetPasswordState extends State<PageResetPassword> {
 
   bool _obscureNewPassword = true;
   bool _obscureConfirmPassword = true;
-
   bool _isLoading = false;
 
   @override
@@ -34,42 +33,60 @@ class _PageResetPasswordState extends State<PageResetPassword> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Đặt lại mật khẩu',
-          style: TextStyle(fontWeight: FontWeight.w600),
-        ),
+        title: const Text('Đặt lại mật khẩu'),
+        centerTitle: true,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
         child: Form(
           key: _formKey,
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text(
-                'Hãy nhập mật khẩu mới của bạn. Mật khẩu mới cần có ít nhất 8 ký tự và bao gồm chữ hoa, chữ thường và số.',
-                style: TextStyle(fontSize: 14, color: Colors.grey),
+              const SizedBox(height: 16),
+              
+              // Header info
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      Icon(
+                        Icons.lock_reset,
+                        size: 48,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'Tạo mật khẩu mới',
+                        style: Theme.of(context).textTheme.titleLarge,
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Mật khẩu mới cần có ít nhất 8 ký tự và bao gồm chữ hoa, chữ thường và số.',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 32),
 
-              // Mật khẩu mới
-              const Text(
-                'Mật khẩu mới',
-                style: TextStyle(fontWeight: FontWeight.w500),
-              ),
-              const SizedBox(height: 8),
+              // New password field
               TextFormField(
                 controller: _newPasswordController,
                 obscureText: _obscureNewPassword,
                 decoration: InputDecoration(
+                  labelText: 'Mật khẩu mới',
                   hintText: 'Nhập mật khẩu mới',
-                  border: const OutlineInputBorder(),
-                  contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 16),
+                  prefixIcon: const Icon(Icons.lock_outlined),
                   suffixIcon: IconButton(
                     icon: Icon(
-                      _obscureNewPassword ? Icons.visibility_off : Icons
-                          .visibility,
+                      _obscureNewPassword ? Icons.visibility_off : Icons.visibility,
                     ),
                     onPressed: () {
                       setState(() {
@@ -97,31 +114,45 @@ class _PageResetPasswordState extends State<PageResetPassword> {
                   return null;
                 },
               ),
-              const SizedBox(height: 10),
-              const Text(
-                'Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường và số.',
-                style: TextStyle(fontSize: 12, color: Colors.grey),
-              ),
-              const SizedBox(height: 20),
-
-              // Xác nhận mật khẩu mới
-              const Text(
-                'Xác nhận mật khẩu mới',
-                style: TextStyle(fontWeight: FontWeight.w500),
-              ),
               const SizedBox(height: 8),
+              
+              // Password requirements
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Yêu cầu mật khẩu:',
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    _buildRequirement('• Ít nhất 8 ký tự'),
+                    _buildRequirement('• Chứa chữ hoa (A-Z)'),
+                    _buildRequirement('• Chứa chữ thường (a-z)'),
+                    _buildRequirement('• Chứa số (0-9)'),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // Confirm password field
               TextFormField(
                 controller: _confirmPasswordController,
                 obscureText: _obscureConfirmPassword,
                 decoration: InputDecoration(
+                  labelText: 'Xác nhận mật khẩu',
                   hintText: 'Nhập lại mật khẩu mới',
-                  border: const OutlineInputBorder(),
-                  contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 16),
+                  prefixIcon: const Icon(Icons.lock_outlined),
                   suffixIcon: IconButton(
                     icon: Icon(
-                      _obscureConfirmPassword ? Icons.visibility_off : Icons
-                          .visibility,
+                      _obscureConfirmPassword ? Icons.visibility_off : Icons.visibility,
                     ),
                     onPressed: () {
                       setState(() {
@@ -140,24 +171,43 @@ class _PageResetPasswordState extends State<PageResetPassword> {
                   return null;
                 },
               ),
-              const SizedBox(height: 30),
+              const SizedBox(height: 32),
 
-              // Nút đặt lại mật khẩu
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _resetPassword,
-                  child: _isLoading
-                      ? const CircularProgressIndicator()
-                      : const Text(
-                    'Đặt lại mật khẩu',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
+              // Reset password button
+              FilledButton(
+                onPressed: _isLoading ? null : _resetPassword,
+                style: FilledButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
+                child: _isLoading
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Text(
+                        'Đặt lại mật khẩu',
+                        style: TextStyle(fontSize: 16),
+                      ),
               ),
+              const SizedBox(height: 24),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRequirement(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 2),
+      child: Text(
+        text,
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
         ),
       ),
     );

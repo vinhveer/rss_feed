@@ -262,10 +262,6 @@ class _PageFavouriteState extends State<PageFavourite> {
       );
     }
 
-    if (controller.favourites.isEmpty) {
-      return _buildEmptyState(context);
-    }
-
     // Convert FavouriteItem to FeedItem
     final feedItems = controller.favourites.map((favourite) {
       return FeedItem(
@@ -280,6 +276,10 @@ class _PageFavouriteState extends State<PageFavourite> {
         keywords: const [],
       );
     }).toList();
+
+    if (feedItems.isEmpty && !controller.isLoading.value) {
+      return _buildEmptyState(context);
+    }
 
     return Stack(
       children: [

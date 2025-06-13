@@ -35,12 +35,15 @@ class _PageChangePasswordState extends State<PageChangePassword> {
 
   @override
   Widget build(BuildContext context) {
+    final primary = colorController.currentSwatch;
+    
     return Scaffold(
       appBar: AppBar(
         title: const Text(
           'Đổi mật khẩu',
           style: TextStyle(fontWeight: FontWeight.w600),
         ),
+        elevation: 0,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
@@ -49,16 +52,41 @@ class _PageChangePasswordState extends State<PageChangePassword> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Để bảo vệ tài khoản của bạn, hãy đặt mật khẩu mạnh và không sử dụng lại mật khẩu cho các tài khoản khác.',
-                style: TextStyle(fontSize: 14, color: Colors.grey),
+              // Thông tin hướng dẫn
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade50,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.blue.shade200),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.info_outline, color: Colors.blue.shade700, size: 20),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Để bảo vệ tài khoản của bạn, hãy đặt mật khẩu mạnh và không sử dụng lại mật khẩu cho các tài khoản khác.',
+                        style: TextStyle(
+                          fontSize: 14, 
+                          color: Colors.blue.shade800,
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 32),
 
               // Mật khẩu hiện tại
-              const Text(
+              Text(
                 'Mật khẩu hiện tại',
-                style: TextStyle(fontWeight: FontWeight.w500),
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 16,
+                  color: Colors.grey.shade800,
+                ),
               ),
               const SizedBox(height: 8),
               TextFormField(
@@ -66,11 +94,34 @@ class _PageChangePasswordState extends State<PageChangePassword> {
                 obscureText: _obscureCurrentPassword,
                 decoration: InputDecoration(
                   hintText: 'Nhập mật khẩu hiện tại',
-                  border: const OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.lock_outline, color: primary),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: primary, width: 2),
+                  ),
+                  errorBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Colors.red),
+                  ),
+                  focusedErrorBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Colors.red, width: 2),
+                  ),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  filled: true,
+                  fillColor: Colors.grey.shade50,
                   suffixIcon: IconButton(
                     icon: Icon(
                       _obscureCurrentPassword ? Icons.visibility_off : Icons.visibility,
+                      color: primary,
                     ),
                     onPressed: () {
                       setState(() {
@@ -86,12 +137,16 @@ class _PageChangePasswordState extends State<PageChangePassword> {
                   return null;
                 },
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 24),
 
               // Mật khẩu mới
-              const Text(
+              Text(
                 'Mật khẩu mới',
-                style: TextStyle(fontWeight: FontWeight.w500),
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 16,
+                  color: Colors.grey.shade800,
+                ),
               ),
               const SizedBox(height: 8),
               TextFormField(
@@ -99,11 +154,34 @@ class _PageChangePasswordState extends State<PageChangePassword> {
                 obscureText: _obscureNewPassword,
                 decoration: InputDecoration(
                   hintText: 'Nhập mật khẩu mới',
-                  border: const OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.lock_outline, color: primary),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: primary, width: 2),
+                  ),
+                  errorBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Colors.red),
+                  ),
+                  focusedErrorBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Colors.red, width: 2),
+                  ),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  filled: true,
+                  fillColor: Colors.grey.shade50,
                   suffixIcon: IconButton(
                     icon: Icon(
                       _obscureNewPassword ? Icons.visibility_off : Icons.visibility,
+                      color: primary,
                     ),
                     onPressed: () {
                       setState(() {
@@ -131,17 +209,41 @@ class _PageChangePasswordState extends State<PageChangePassword> {
                   return null;
                 },
               ),
-              const SizedBox(height: 10),
-              const Text(
-                'Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường và số.',
-                style: TextStyle(fontSize: 12, color: Colors.grey),
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.amber.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.amber.shade200),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.tips_and_updates_outlined, color: Colors.amber.shade700, size: 16),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường và số.',
+                        style: TextStyle(
+                          fontSize: 12, 
+                          color: Colors.amber.shade800,
+                          height: 1.3,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 24),
 
               // Xác nhận mật khẩu mới
-              const Text(
+              Text(
                 'Xác nhận mật khẩu mới',
-                style: TextStyle(fontWeight: FontWeight.w500),
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 16,
+                  color: Colors.grey.shade800,
+                ),
               ),
               const SizedBox(height: 8),
               TextFormField(
@@ -149,11 +251,34 @@ class _PageChangePasswordState extends State<PageChangePassword> {
                 obscureText: _obscureConfirmPassword,
                 decoration: InputDecoration(
                   hintText: 'Nhập lại mật khẩu mới',
-                  border: const OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.lock_outline, color: primary),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: primary, width: 2),
+                  ),
+                  errorBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Colors.red),
+                  ),
+                  focusedErrorBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Colors.red, width: 2),
+                  ),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  filled: true,
+                  fillColor: Colors.grey.shade50,
                   suffixIcon: IconButton(
                     icon: Icon(
                       _obscureConfirmPassword ? Icons.visibility_off : Icons.visibility,
+                      color: primary,
                     ),
                     onPressed: () {
                       setState(() {
@@ -172,20 +297,40 @@ class _PageChangePasswordState extends State<PageChangePassword> {
                   return null;
                 },
               ),
-              const SizedBox(height: 30),
+              const SizedBox(height: 40),
 
               // Nút đổi mật khẩu
               SizedBox(
                 width: double.infinity,
-                height: 50,
+                height: 56,
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _changePassword,
-                  child: _isLoading
-                      ? const CircularProgressIndicator()
-                      : const Text(
-                    'Đổi mật khẩu',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primary,
+                    foregroundColor: Colors.white,
+                    elevation: 4,
+                    shadowColor: primary.withOpacity(0.4),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    disabledBackgroundColor: Colors.grey.shade300,
                   ),
+                  child: _isLoading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        )
+                      : const Text(
+                          'Đổi mật khẩu',
+                          style: TextStyle(
+                            fontSize: 16, 
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                 ),
               ),
             ],
@@ -230,9 +375,12 @@ class _PageChangePasswordState extends State<PageChangePassword> {
         Get.snackbar(
           'Thành công',
           'Đổi mật khẩu thành công',
-          backgroundColor: Colors.green,
+          snackPosition: SnackPosition.TOP,
+          backgroundColor: Colors.green.shade400,
           colorText: Colors.white,
-          snackPosition: SnackPosition.BOTTOM,
+          icon: const Icon(Icons.check_circle, color: Colors.white),
+          borderRadius: 12,
+          margin: const EdgeInsets.all(16),
         );
 
         Get.off(() => PageSettings());
@@ -240,9 +388,12 @@ class _PageChangePasswordState extends State<PageChangePassword> {
         Get.snackbar(
           'Lỗi',
           'Không thể đổi mật khẩu: ${e.toString()}',
-          backgroundColor: Colors.red,
+          snackPosition: SnackPosition.TOP,
+          backgroundColor: Colors.red.shade400,
           colorText: Colors.white,
-          snackPosition: SnackPosition.BOTTOM,
+          icon: const Icon(Icons.error, color: Colors.white),
+          borderRadius: 12,
+          margin: const EdgeInsets.all(16),
         );
       } finally {
         setState(() {

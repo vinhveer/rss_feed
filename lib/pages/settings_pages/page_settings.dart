@@ -90,33 +90,6 @@ class PageSettings extends StatelessWidget {
               )),
 
               const SizedBox(height: 16),
-
-              // Cá nhân hoá
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Text(
-                  'CÁ NHÂN HOÁ',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
-              ListTile(
-                leading: const Icon(Icons.topic),
-                title: const Text('Chọn chủ đề đọc'),
-                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                onTap: () => appController.goToChooseTopic(),
-              ),
-              ListTile(
-                leading: const Icon(Icons.data_saver_off),
-                title: const Text('Dữ liệu cá nhân hoá từ bạn'),
-                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                onTap: () => appController.goToChooseTopic(),
-              ),
-              const SizedBox(height: 16),
               (Supabase.instance.client.auth.currentUser?.email?.isNotEmpty ?? false)
                   ? Column(
                 children: [
